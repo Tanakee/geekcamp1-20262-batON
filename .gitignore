@@ -29,5 +29,4 @@ backend/npm-debug.log*
 
 # Swift Package (古いファイル)
 Sources/
-Info.plist
 Package.swift
