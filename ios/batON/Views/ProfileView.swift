@@ -1,19 +1,40 @@
 import SwiftUI
 
 struct ProfileView: View {
+    @EnvironmentObject var appViewModel: AppViewModel
+    @EnvironmentObject var authViewModel: AuthViewModel
+    @State private var showLogoutAlert = false
+
+    // バッジ解除条件
+    private var badges: [(emoji: String, title: String, isUnlocked: Bool)] {
+        let count = appViewModel.kindnessActs.count
+        let reportedCount = appViewModel.reportedCount
+        let usedCategories = Set(appViewModel.kindnessActs.map { $0.category })
+        return [
+            ("🌱", "初恩送り",    count >= 1),
+            ("⭐", "5回達成",    count >= 5),
+            ("🔥", "10回達成",   count >= 10),
+            ("🌟", "全カテゴリ", usedCategories.count >= KindnessCategory.allCases.count),
+            ("📬", "初報告",     reportedCount >= 1),
+            ("💎", "30日連続",   false), // TODO: 連続記録機能
+        ]
+    }
+
     var body: some View {
         ZStack {
             Color.batBackground.ignoresSafeArea()
 
             ScrollView {
                 VStack(spacing: 24) {
+
                     // プロフィールヘッダー
                     VStack(spacing: 16) {
                         ZStack {
                             Circle()
                                 .fill(LinearGradient.batPrimaryGradient)
                                 .frame(width: 88, height: 88)
-                            Text("田")
+                                .shadow(color: Color.batPrimary.opacity(0.4), radius: 16, x: 0, y: 6)
+                            Text(String(authViewModel.currentUserName.prefix(1)))
                                 .font(.system(size: 36, weight: .bold))
                                 .foregroundColor(.white)
                         }
@@ -24,10 +45,10 @@ struct ProfileView: View {
                         )
 
                         VStack(spacing: 4) {
-                            Text("田中太郎")
+                            Text(authViewModel.currentUserName.isEmpty ? "ユーザー" : authViewModel.currentUserName)
                                 .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(Color.batTextPrimary)
-                            Text("tanaka.taro@email.com")
+                            Text("恩送りをつなぐ人")
                                 .font(.system(size: 13))
                                 .foregroundColor(Color.batTextSecondary)
                         }
@@ -37,11 +58,11 @@ struct ProfileView: View {
 
                     // 統計
                     HStack(spacing: 0) {
-                        ProfileStatItem(value: "3", label: "恩送り活動")
+                        ProfileStatItem(value: "\(appViewModel.kindnessActs.count)", label: "恩送り活動")
                         Divider().frame(height: 40).background(Color.batCardLight)
-                        ProfileStatItem(value: "2", label: "報告完了")
+                        ProfileStatItem(value: "\(appViewModel.reportedCount)", label: "報告完了")
                         Divider().frame(height: 40).background(Color.batCardLight)
-                        ProfileStatItem(value: "2", label: "バッジ")
+                        ProfileStatItem(value: "\(badges.filter { $0.isUnlocked }.count)", label: "バッジ")
                     }
                     .padding(.vertical, 20)
                     .background(Color.batCard)
@@ -57,11 +78,9 @@ struct ProfileView: View {
 
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 12) {
-                                BadgeItem(emoji: "🌱", title: "初恩送り", isUnlocked: true)
-                                BadgeItem(emoji: "⭐", title: "5回達成", isUnlocked: true)
-                                BadgeItem(emoji: "🔥", title: "10回達成", isUnlocked: false)
-                                BadgeItem(emoji: "🌟", title: "全カテゴリ", isUnlocked: false)
-                                BadgeItem(emoji: "💎", title: "30日連続", isUnlocked: false)
+                                ForEach(badges, id: \.title) { badge in
+                                    BadgeItem(emoji: badge.emoji, title: badge.title, isUnlocked: badge.isUnlocked)
+                                }
                             }
                             .padding(.horizontal)
                         }
@@ -69,10 +88,12 @@ struct ProfileView: View {
 
                     // メニュー
                     VStack(spacing: 2) {
-                        MenuRow(icon: "pencil.circle.fill", title: "プロフィール編集", color: Color.batSecondary)
-                        MenuRow(icon: "gearshape.fill", title: "設定", color: Color.batPrimary)
-                        MenuRow(icon: "questionmark.circle.fill", title: "ヘルプ & FAQ", color: Color.batAccent)
-                        MenuRow(icon: "rectangle.portrait.and.arrow.right.fill", title: "ログアウト", color: .red)
+                        MenuRow(icon: "pencil.circle.fill", title: "プロフィール編集", color: Color.batSecondary, action: {})
+                        MenuRow(icon: "gearshape.fill", title: "設定", color: Color.batPrimary, action: {})
+                        MenuRow(icon: "questionmark.circle.fill", title: "ヘルプ & FAQ", color: Color.batAccent, action: {})
+                        MenuRow(icon: "rectangle.portrait.and.arrow.right.fill", title: "ログアウト", color: .red) {
+                            showLogoutAlert = true
+                        }
                     }
                     .background(Color.batCard)
                     .cornerRadius(18)
@@ -82,6 +103,14 @@ struct ProfileView: View {
             }
         }
         .navigationBarHidden(true)
+        .alert("ログアウト", isPresented: $showLogoutAlert) {
+            Button("キャンセル", role: .cancel) {}
+            Button("ログアウト", role: .destructive) {
+                authViewModel.logout()
+            }
+        } message: {
+            Text("ログアウトしますか？")
+        }
     }
 }
 
@@ -131,21 +160,19 @@ struct MenuRow: View {
     let icon: String
     let title: String
     let color: Color
+    let action: () -> Void
 
     var body: some View {
-        Button(action: {}) {
+        Button(action: action) {
             HStack(spacing: 14) {
                 Image(systemName: icon)
                     .font(.system(size: 18))
                     .foregroundColor(color)
                     .frame(width: 28)
-
                 Text(title)
                     .font(.system(size: 15))
                     .foregroundColor(Color.batTextPrimary)
-
                 Spacer()
-
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12))
                     .foregroundColor(Color.batTextSecondary)
@@ -158,4 +185,6 @@ struct MenuRow: View {
 
 #Preview {
     ProfileView()
+        .environmentObject(AppViewModel())
+        .environmentObject(AuthViewModel())
 }
