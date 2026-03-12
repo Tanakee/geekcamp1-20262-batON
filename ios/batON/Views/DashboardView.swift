@@ -50,7 +50,9 @@ struct DashboardView: View {
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(Color.batTextPrimary)
                             Spacer()
-                            NavigationLink(destination: GratitudeChain3DView()) {
+                            NavigationLink(destination: GratitudeChain3DView()
+                                .environmentObject(appViewModel)
+                            ) {
                                 Text("詳細 →")
                                     .font(.system(size: 13))
                                     .foregroundColor(Color.batSecondary)
@@ -58,18 +60,31 @@ struct DashboardView: View {
                         }
 
                         VStack(spacing: 0) {
-                            if let first = appViewModel.benefactors.first {
-                                ChainNode(name: first.name, role: "恩人", color: Color.batAccent)
+                            // 恩人（最大3人まで横並び）
+                            if appViewModel.benefactors.isEmpty {
+                                ChainNode(name: "恩人未登録", role: "恩人", color: Color.batAccent)
                             } else {
-                                ChainNode(name: "恩人", role: "恩人", color: Color.batAccent)
+                                HStack(spacing: 12) {
+                                    ForEach(Array(appViewModel.benefactors.prefix(3))) { b in
+                                        ChainNode(name: b.name, role: "恩人", color: Color.batAccent)
+                                    }
+                                }
                             }
                             ChainArrow()
                             ChainNode(name: authViewModel.currentUserName.isEmpty ? "あなた" : authViewModel.currentUserName, role: "ユーザー", color: Color.batPrimary)
                             ChainArrow()
-                            HStack(spacing: 12) {
-                                let recentActs = appViewModel.kindnessActs.prefix(3)
-                                ForEach(Array(recentActs), id: \.id) { act in
-                                    ChainNode(name: act.recipientName, role: "受益者", color: Color.batSecondary)
+                            // 受益者（重複排除 + 最大3人まで）
+                            let uniqueRecipients = Array(
+                                Dictionary(grouping: appViewModel.kindnessActs, by: { $0.recipientName })
+                                    .keys.prefix(3)
+                            )
+                            if uniqueRecipients.isEmpty {
+                                ChainNode(name: "受益者未記録", role: "受益者", color: Color.batSecondary)
+                            } else {
+                                HStack(spacing: 12) {
+                                    ForEach(uniqueRecipients, id: \.self) { name in
+                                        ChainNode(name: name, role: "受益者", color: Color.batSecondary)
+                                    }
                                 }
                             }
                         }
