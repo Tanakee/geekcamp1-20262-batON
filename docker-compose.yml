@@ -1,0 +1,69 @@
+services:
+  # PostgreSQL データベース
+  postgres:
+    image: postgres:16-alpine
+    container_name: baton-postgres
+    environment:
+      POSTGRES_USER: baton_user
+      POSTGRES_PASSWORD: baton_password
+      POSTGRES_DB: baton_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - baton-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U baton_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis キャッシュ
+  redis:
+    image: redis:7-alpine
+    container_name: baton-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - baton-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Node.js API サーバー
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: baton-api
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://baton_user:baton_password@postgres:5432/baton_db
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+    networks:
+      - baton-network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  baton-network:
+    driver: bridge
