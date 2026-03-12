@@ -1,0 +1,33 @@
+# Swift / Xcode
+.build/
+ios/**/.DS_Store
+ios/**/build/
+ios/**/*.xcuserstate
+ios/**/*.xcworkspace/xcuserdata/
+ios/**/.swiftpm/
+ios/**/DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# Node.js
+backend/node_modules/
+backend/.env
+backend/npm-debug.log*
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Docker
+.env
+
+# Swift Package (古いファイル)
+Sources/
+Info.plist
+Package.swift
