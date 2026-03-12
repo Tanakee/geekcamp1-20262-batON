@@ -11,6 +11,7 @@ struct AddKindnessActView: View {
     @State private var actDate = Date()
     @State private var recipientName = ""
     @State private var errorMessage = ""
+    @State private var isSaving = false
 
     var body: some View {
         ZStack {
@@ -132,9 +133,14 @@ struct AddKindnessActView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
-                        BatPrimaryButton(title: "記録する", icon: "checkmark.circle.fill") {
+                        BatPrimaryButton(
+                            title: isSaving ? "記録中…" : "記録する",
+                            icon: isSaving ? "hourglass" : "checkmark.circle.fill"
+                        ) {
                             save()
                         }
+                        .disabled(isSaving)
+                        .opacity(isSaving ? 0.7 : 1)
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 32)
@@ -148,6 +154,8 @@ struct AddKindnessActView: View {
         guard !selectedBenefactorId.isEmpty else { errorMessage = "恩人を選択してください"; return }
         guard !recipientName.isEmpty else { errorMessage = "受益者を入力してください"; return }
 
+        isSaving = true
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
         appViewModel.addKindnessAct(
             benefactorId: selectedBenefactorId,
             title: title,

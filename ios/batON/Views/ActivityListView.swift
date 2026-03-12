@@ -22,7 +22,19 @@ struct ActivityListView: View {
                 }
                 .padding()
 
-                if appViewModel.kindnessActs.isEmpty {
+                if appViewModel.isLoadingData {
+                    Spacer()
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.3)
+                            .tint(Color.batPrimary)
+                        Text("読み込み中…")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color.batTextSecondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    Spacer()
+                } else if appViewModel.kindnessActs.isEmpty {
                     Spacer()
                     VStack(spacing: 12) {
                         Text("✨")

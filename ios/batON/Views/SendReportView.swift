@@ -6,6 +6,7 @@ struct SendReportView: View {
     @Environment(\.presentationMode) private var presentationMode
 
     @State private var message = ""
+    @State private var isSending = false
 
     var benefactor: Benefactor? { appViewModel.benefactor(for: act.benefactorId) }
 
@@ -109,9 +110,14 @@ struct SendReportView: View {
                             }
                         }
 
-                        BatPrimaryButton(title: "報告を送る", icon: "paperplane.fill") {
+                        BatPrimaryButton(
+                            title: isSending ? "送信中…" : "報告を送る",
+                            icon: isSending ? "hourglass" : "paperplane.fill"
+                        ) {
                             send()
                         }
+                        .disabled(isSending || message.isEmpty)
+                        .opacity(isSending || message.isEmpty ? 0.7 : 1)
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 32)
@@ -121,6 +127,9 @@ struct SendReportView: View {
     }
 
     private func send() {
+        guard !message.isEmpty else { return }
+        isSending = true
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
         let b = benefactor
         appViewModel.sendReport(
             for: act,
