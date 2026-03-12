@@ -161,19 +161,71 @@ class AppViewModel: ObservableObject {
     }
 
     func addKindnessAct(benefactorId: String, title: String, description: String, category: KindnessCategory, actDate: Date, recipientName: String) {
-        let new = KindnessAct(id: UUID().uuidString, benefactorId: benefactorId, title: title, description: description, category: category, actDate: actDate, recipientName: recipientName, isReported: false)
-        kindnessActs.append(new)
+        let tempId = UUID().uuidString
+        let new = KindnessAct(id: tempId, benefactorId: benefactorId, title: title, description: description, category: category, actDate: actDate, recipientName: recipientName, isReported: false)
+        kindnessActs.insert(new, at: 0)
         if let i = benefactors.firstIndex(where: { $0.id == benefactorId }) {
             benefactors[i].kindnessActCount += 1
+        }
+
+        guard !userId.isEmpty, userId != "mock-user" else { return }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        let actDateStr = formatter.string(from: actDate)
+        let mutation = """
+        mutation CreateKindnessAct($userId: ID!, $benefactorId: ID!, $title: String!, $description: String, $category: String!, $actDate: String!, $recipientName: String!) {
+            createKindnessAct(userId: $userId, benefactorId: $benefactorId, title: $title, description: $description, category: $category, actDate: $actDate, recipientName: $recipientName) {
+                id benefactorId title description category actDate recipientName isReported
+            }
+        }
+        """
+        struct CreateActData: Decodable { let createKindnessAct: APIKindnessAct }
+        let vars: [String: Any] = ["userId": userId, "benefactorId": benefactorId, "title": title, "description": description, "category": category.rawValue, "actDate": actDateStr, "recipientName": recipientName]
+        APIService.shared.execute(query: mutation, variables: vars) { [weak self] (result: Result<CreateActData, Error>) in
+            if case .success(let data) = result,
+               let i = self?.kindnessActs.firstIndex(where: { $0.id == tempId }) {
+                let act = data.createKindnessAct
+                let date = formatter.date(from: String(act.actDate.prefix(10))) ?? actDate
+                self?.kindnessActs[i] = KindnessAct(id: act.id, benefactorId: act.benefactorId, title: act.title, description: act.description ?? "", category: KindnessCategory(rawValue: act.category) ?? .other, actDate: date, recipientName: act.recipientName, isReported: act.isReported)
+            }
         }
     }
 
     func sendReport(for act: KindnessAct, benefactorName: String, message: String) {
+        // Optimistic update
         if let i = kindnessActs.firstIndex(where: { $0.id == act.id }) {
             kindnessActs[i].isReported = true
         }
-        let report = Report(id: UUID().uuidString, kindnessActId: act.id, benefactorId: act.benefactorId, activityTitle: act.title, benefactorName: benefactorName, message: message, status: .sent, createdAt: Date())
-        reports.append(report)
+        let tempId = UUID().uuidString
+        let report = Report(id: tempId, kindnessActId: act.id, benefactorId: act.benefactorId, activityTitle: act.title, benefactorName: benefactorName, message: message, status: .sent, createdAt: Date())
+        reports.insert(report, at: 0)
+
+        guard !userId.isEmpty, userId != "mock-user" else { return }
+        let createMutation = """
+        mutation CreateReport($kindnessActId: ID!, $benefactorId: ID!, $userId: ID!, $message: String!) {
+            createReport(kindnessActId: $kindnessActId, benefactorId: $benefactorId, userId: $userId, message: $message) {
+                id
+            }
+        }
+        """
+        struct CreateReportData: Decodable { let createReport: APIReportId }
+        struct APIReportId: Decodable { let id: String }
+        let vars: [String: Any] = ["kindnessActId": act.id, "benefactorId": act.benefactorId, "userId": userId, "message": message]
+        APIService.shared.execute(query: createMutation, variables: vars) { [weak self] (result: Result<CreateReportData, Error>) in
+            guard case .success(let data) = result else { return }
+            let reportId = data.createReport.id
+            // tempId を実IDに差し替え
+            if let i = self?.reports.firstIndex(where: { $0.id == tempId }) {
+                self?.reports[i] = Report(id: reportId, kindnessActId: act.id, benefactorId: act.benefactorId, activityTitle: act.title, benefactorName: benefactorName, message: message, status: .sent, createdAt: Date())
+            }
+            let sendMutation = """
+            mutation SendReport($id: ID!) {
+                sendReport(id: $id) { id status sentAt }
+            }
+            """
+            struct SendReportData: Decodable { let sendReport: APIReportId }
+            APIService.shared.execute(query: sendMutation, variables: ["id": reportId]) { (_: Result<SendReportData, Error>) in }
+        }
     }
 
     func benefactor(for id: String) -> Benefactor? {
