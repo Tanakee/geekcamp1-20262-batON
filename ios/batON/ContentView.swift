@@ -32,6 +32,9 @@ struct ContentView: View {
         .onAppear {
             appViewModel.loadFromAPI(userId: authViewModel.currentUserId)
         }
+        .onChange(of: authViewModel.currentUserId) { newId in
+            appViewModel.loadFromAPI(userId: newId)
+        }
     }
 }
 

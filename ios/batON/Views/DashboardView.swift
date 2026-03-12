@@ -114,6 +114,56 @@ struct DashboardView: View {
             AddKindnessActView()
                 .environmentObject(appViewModel)
         }
+        .overlay(loadingOverlay)
+        .overlay(errorBanner, alignment: .top)
+        .animation(.easeInOut(duration: 0.3), value: appViewModel.apiError)
+    }
+
+    @ViewBuilder
+    private var loadingOverlay: some View {
+        if appViewModel.isLoadingData {
+            ZStack {
+                Color.black.opacity(0.3).ignoresSafeArea()
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .tint(.white)
+                    Text("データを読み込み中…")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                }
+                .padding(32)
+                .background(Color.batCard.opacity(0.95))
+                .cornerRadius(20)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var errorBanner: some View {
+        if let error = appViewModel.apiError {
+            HStack(spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                Text(error)
+                    .font(.system(size: 13))
+                    .foregroundColor(Color.batTextPrimary)
+                Spacer()
+                Button { appViewModel.apiError = nil } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(Color.batTextSecondary)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.batCard)
+            .cornerRadius(12)
+            .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+            .padding(.horizontal)
+            .padding(.top, 8)
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
     }
 }
 

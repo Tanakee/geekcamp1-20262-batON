@@ -44,8 +44,12 @@ class AppViewModel: ObservableObject {
     @Published var kindnessActs: [KindnessAct] = []
     @Published var reports: [Report] = []
     @Published var isLoadingData: Bool = false
+    @Published var apiError: String? = nil
 
     private var userId: String = ""
+    private var pendingFetches: Int = 0 {
+        didSet { isLoadingData = pendingFetches > 0 }
+    }
 
     // MARK: - 統計
     var thisMonthActCount: Int {
@@ -69,9 +73,14 @@ class AppViewModel: ObservableObject {
 
     // MARK: - APIからデータ取得
     func loadFromAPI(userId: String) {
-        guard userId != "mock-user" else { return }
+        guard !userId.isEmpty, userId != "mock-user" else { return }
         self.userId = userId
-        isLoadingData = true
+        apiError = nil
+        // APIユーザーはモックデータを消去して実データに入れ替え
+        benefactors = []
+        kindnessActs = []
+        reports = []
+        pendingFetches = 3
         fetchBenefactors(userId: userId)
         fetchKindnessActs(userId: userId)
         fetchReports(userId: userId)
@@ -86,12 +95,19 @@ class AppViewModel: ObservableObject {
         }
         """
         APIService.shared.execute(query: query, variables: ["userId": userId]) { [weak self] (result: Result<BenefactorsData, Error>) in
-            if case .success(let data) = result {
-                self?.benefactors = data.benefactors.map {
-                    Benefactor(id: $0.id, name: $0.name, relation: $0.relation ?? "", kindnessDescription: $0.kindnessDescription ?? "", kindnessActCount: $0.kindnessActCount)
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let data):
+                    self?.benefactors = data.benefactors.map {
+                        Benefactor(id: $0.id, name: $0.name, relation: $0.relation ?? "", kindnessDescription: $0.kindnessDescription ?? "", kindnessActCount: $0.kindnessActCount)
+                    }
+                case .failure(let error):
+                    if case APIError.networkError = error { } else {
+                        self?.apiError = "データの取得に失敗しました"
+                    }
                 }
+                self?.pendingFetches -= 1
             }
-            self?.isLoadingData = false
         }
     }
 
@@ -104,14 +120,17 @@ class AppViewModel: ObservableObject {
         }
         """
         APIService.shared.execute(query: query, variables: ["userId": userId]) { [weak self] (result: Result<KindnessActsData, Error>) in
-            if case .success(let data) = result {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                self?.kindnessActs = data.kindnessActs.compactMap { act in
-                    let date = formatter.date(from: String(act.actDate.prefix(10))) ?? Date()
-                    let category = KindnessCategory(rawValue: act.category) ?? .other
-                    return KindnessAct(id: act.id, benefactorId: act.benefactorId, title: act.title, description: act.description ?? "", category: category, actDate: date, recipientName: act.recipientName, isReported: act.isReported)
+            DispatchQueue.main.async {
+                if case .success(let data) = result {
+                    let formatter = DateFormatter()
+                    formatter.dateFormat = "yyyy-MM-dd"
+                    self?.kindnessActs = data.kindnessActs.compactMap { act in
+                        let date = formatter.date(from: String(act.actDate.prefix(10))) ?? Date()
+                        let category = KindnessCategory(rawValue: act.category) ?? .other
+                        return KindnessAct(id: act.id, benefactorId: act.benefactorId, title: act.title, description: act.description ?? "", category: category, actDate: date, recipientName: act.recipientName, isReported: act.isReported)
+                    }
                 }
+                self?.pendingFetches -= 1
             }
         }
     }
@@ -125,15 +144,18 @@ class AppViewModel: ObservableObject {
         }
         """
         APIService.shared.execute(query: query, variables: ["userId": userId]) { [weak self] (result: Result<ReportsData, Error>) in
-            if case .success(let data) = result {
-                let formatter = ISO8601DateFormatter()
-                self?.reports = data.reports.compactMap { r in
-                    let date = formatter.date(from: r.createdAt) ?? Date()
-                    let status: ReportStatus = r.status == "SENT" ? .sent : .draft
-                    let act = self?.kindnessActs.first { $0.id == r.kindnessActId }
-                    let benefactor = self?.benefactors.first { $0.id == r.benefactorId }
-                    return Report(id: r.id, kindnessActId: r.kindnessActId, benefactorId: r.benefactorId, activityTitle: act?.title ?? "", benefactorName: benefactor?.name ?? "", message: r.message, status: status, createdAt: date)
+            DispatchQueue.main.async {
+                if case .success(let data) = result {
+                    let formatter = ISO8601DateFormatter()
+                    self?.reports = data.reports.compactMap { r in
+                        let date = formatter.date(from: r.createdAt) ?? Date()
+                        let status: ReportStatus = r.status == "SENT" ? .sent : .draft
+                        let act = self?.kindnessActs.first { $0.id == r.kindnessActId }
+                        let benefactor = self?.benefactors.first { $0.id == r.benefactorId }
+                        return Report(id: r.id, kindnessActId: r.kindnessActId, benefactorId: r.benefactorId, activityTitle: act?.title ?? "", benefactorName: benefactor?.name ?? "", message: r.message, status: status, createdAt: date)
+                    }
                 }
+                self?.pendingFetches -= 1
             }
         }
     }
