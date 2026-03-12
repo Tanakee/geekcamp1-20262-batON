@@ -1,10 +1,51 @@
 import SwiftUI
 import Combine
 
+// MARK: - API レスポンス型
+private struct BenefactorsData: Decodable {
+    let benefactors: [APIBenefactor]
+}
+private struct KindnessActsData: Decodable {
+    let kindnessActs: [APIKindnessAct]
+}
+private struct ReportsData: Decodable {
+    let reports: [APIReport]
+}
+
+private struct APIBenefactor: Decodable {
+    let id: String
+    let name: String
+    let relation: String?
+    let kindnessDescription: String?
+    let kindnessActCount: Int
+}
+private struct APIKindnessAct: Decodable {
+    let id: String
+    let benefactorId: String
+    let title: String
+    let description: String?
+    let category: String
+    let actDate: String
+    let recipientName: String
+    let isReported: Bool
+}
+private struct APIReport: Decodable {
+    let id: String
+    let kindnessActId: String
+    let benefactorId: String
+    let message: String
+    let status: String
+    let createdAt: String
+}
+
+// MARK: - AppViewModel
 class AppViewModel: ObservableObject {
     @Published var benefactors: [Benefactor] = []
     @Published var kindnessActs: [KindnessAct] = []
     @Published var reports: [Report] = []
+    @Published var isLoadingData: Bool = false
+
+    private var userId: String = ""
 
     // MARK: - 統計
     var thisMonthActCount: Int {
@@ -13,7 +54,6 @@ class AppViewModel: ObservableObject {
             Calendar.current.isDate($0.actDate, equalTo: now, toGranularity: .month)
         }.count
     }
-
     var reportedCount: Int { kindnessActs.filter { $0.isReported }.count }
     var pendingReportCount: Int { kindnessActs.filter { !$0.isReported }.count }
 
@@ -22,36 +62,106 @@ class AppViewModel: ObservableObject {
         let grouped = Dictionary(grouping: sorted) { $0.monthString }
         return grouped.sorted { $0.key > $1.key }.map { ($0.key, $0.value) }
     }
-
     var pendingReports: [Report] { reports.filter { !$0.isCompleted } }
     var completedReports: [Report] { reports.filter { $0.isCompleted } }
 
-    // MARK: - CRUD
-    func addBenefactor(name: String, relation: String, kindnessDescription: String) {
-        let new = Benefactor(
-            id: UUID().uuidString,
-            name: name,
-            relation: relation,
-            kindnessDescription: kindnessDescription,
-            kindnessActCount: 0
-        )
-        benefactors.append(new)
+    init() { loadMockData() }
+
+    // MARK: - APIからデータ取得
+    func loadFromAPI(userId: String) {
+        guard userId != "mock-user" else { return }
+        self.userId = userId
+        isLoadingData = true
+        fetchBenefactors(userId: userId)
+        fetchKindnessActs(userId: userId)
+        fetchReports(userId: userId)
     }
 
-    func addKindnessAct(
-        benefactorId: String, title: String, description: String,
-        category: KindnessCategory, actDate: Date, recipientName: String
-    ) {
-        let new = KindnessAct(
-            id: UUID().uuidString,
-            benefactorId: benefactorId,
-            title: title,
-            description: description,
-            category: category,
-            actDate: actDate,
-            recipientName: recipientName,
-            isReported: false
-        )
+    private func fetchBenefactors(userId: String) {
+        let query = """
+        query Benefactors($userId: ID!) {
+            benefactors(userId: $userId) {
+                id name relation kindnessDescription kindnessActCount
+            }
+        }
+        """
+        APIService.shared.execute(query: query, variables: ["userId": userId]) { [weak self] (result: Result<BenefactorsData, Error>) in
+            if case .success(let data) = result {
+                self?.benefactors = data.benefactors.map {
+                    Benefactor(id: $0.id, name: $0.name, relation: $0.relation ?? "", kindnessDescription: $0.kindnessDescription ?? "", kindnessActCount: $0.kindnessActCount)
+                }
+            }
+            self?.isLoadingData = false
+        }
+    }
+
+    private func fetchKindnessActs(userId: String) {
+        let query = """
+        query KindnessActs($userId: ID!) {
+            kindnessActs(userId: $userId) {
+                id benefactorId title description category actDate recipientName isReported
+            }
+        }
+        """
+        APIService.shared.execute(query: query, variables: ["userId": userId]) { [weak self] (result: Result<KindnessActsData, Error>) in
+            if case .success(let data) = result {
+                let formatter = DateFormatter()
+                formatter.dateFormat = "yyyy-MM-dd"
+                self?.kindnessActs = data.kindnessActs.compactMap { act in
+                    let date = formatter.date(from: String(act.actDate.prefix(10))) ?? Date()
+                    let category = KindnessCategory(rawValue: act.category) ?? .other
+                    return KindnessAct(id: act.id, benefactorId: act.benefactorId, title: act.title, description: act.description ?? "", category: category, actDate: date, recipientName: act.recipientName, isReported: act.isReported)
+                }
+            }
+        }
+    }
+
+    private func fetchReports(userId: String) {
+        let query = """
+        query Reports($userId: ID!) {
+            reports(userId: $userId) {
+                id kindnessActId benefactorId message status createdAt
+            }
+        }
+        """
+        APIService.shared.execute(query: query, variables: ["userId": userId]) { [weak self] (result: Result<ReportsData, Error>) in
+            if case .success(let data) = result {
+                let formatter = ISO8601DateFormatter()
+                self?.reports = data.reports.compactMap { r in
+                    let date = formatter.date(from: r.createdAt) ?? Date()
+                    let status: ReportStatus = r.status == "SENT" ? .sent : .draft
+                    let act = self?.kindnessActs.first { $0.id == r.kindnessActId }
+                    let benefactor = self?.benefactors.first { $0.id == r.benefactorId }
+                    return Report(id: r.id, kindnessActId: r.kindnessActId, benefactorId: r.benefactorId, activityTitle: act?.title ?? "", benefactorName: benefactor?.name ?? "", message: r.message, status: status, createdAt: date)
+                }
+            }
+        }
+    }
+
+    // MARK: - CRUD（API + ローカル反映）
+    func addBenefactor(name: String, relation: String, kindnessDescription: String) {
+        let tempId = UUID().uuidString
+        let new = Benefactor(id: tempId, name: name, relation: relation, kindnessDescription: kindnessDescription, kindnessActCount: 0)
+        benefactors.append(new)
+
+        guard !userId.isEmpty, userId != "mock-user" else { return }
+        let mutation = """
+        mutation CreateBenefactor($userId: ID!, $name: String!, $relation: String, $kindnessDescription: String) {
+            createBenefactor(userId: $userId, name: $name, relation: $relation, kindnessDescription: $kindnessDescription) {
+                id name relation kindnessDescription kindnessActCount
+            }
+        }
+        """
+        struct CreateData: Decodable { let createBenefactor: APIBenefactor }
+        APIService.shared.execute(query: mutation, variables: ["userId": userId, "name": name, "relation": relation, "kindnessDescription": kindnessDescription]) { [weak self] (result: Result<CreateData, Error>) in
+            if case .success(let data) = result, let i = self?.benefactors.firstIndex(where: { $0.id == tempId }) {
+                self?.benefactors[i] = Benefactor(id: data.createBenefactor.id, name: data.createBenefactor.name, relation: data.createBenefactor.relation ?? "", kindnessDescription: data.createBenefactor.kindnessDescription ?? "", kindnessActCount: 0)
+            }
+        }
+    }
+
+    func addKindnessAct(benefactorId: String, title: String, description: String, category: KindnessCategory, actDate: Date, recipientName: String) {
+        let new = KindnessAct(id: UUID().uuidString, benefactorId: benefactorId, title: title, description: description, category: category, actDate: actDate, recipientName: recipientName, isReported: false)
         kindnessActs.append(new)
         if let i = benefactors.firstIndex(where: { $0.id == benefactorId }) {
             benefactors[i].kindnessActCount += 1
@@ -62,16 +172,7 @@ class AppViewModel: ObservableObject {
         if let i = kindnessActs.firstIndex(where: { $0.id == act.id }) {
             kindnessActs[i].isReported = true
         }
-        let report = Report(
-            id: UUID().uuidString,
-            kindnessActId: act.id,
-            benefactorId: act.benefactorId,
-            activityTitle: act.title,
-            benefactorName: benefactorName,
-            message: message,
-            status: .sent,
-            createdAt: Date()
-        )
+        let report = Report(id: UUID().uuidString, kindnessActId: act.id, benefactorId: act.benefactorId, activityTitle: act.title, benefactorName: benefactorName, message: message, status: .sent, createdAt: Date())
         reports.append(report)
     }
 
@@ -79,26 +180,19 @@ class AppViewModel: ObservableObject {
         benefactors.first { $0.id == id }
     }
 
-    // MARK: - モックデータ
-    init() { loadMockData() }
-
+    // MARK: - モックデータ（API未接続時のフォールバック）
     private func loadMockData() {
         let cal = Calendar.current
         let now = Date()
-
         let b1 = Benefactor(id: "b1", name: "田中太郎", relation: "父", kindnessDescription: "受験勉強を毎晩支えてくれた", kindnessActCount: 3)
         let b2 = Benefactor(id: "b2", name: "山田花子", relation: "友人", kindnessDescription: "辛いときいつも相談に乗ってくれた", kindnessActCount: 1)
         let b3 = Benefactor(id: "b3", name: "佐藤先生", relation: "学校の先生", kindnessDescription: "進路について真剣に向き合ってくれた", kindnessActCount: 0)
         benefactors = [b1, b2, b3]
-
         let act1 = KindnessAct(id: "a1", benefactorId: "b2", title: "友人Aに数学を教えた", description: "数学が苦手な後輩に放課後2時間教えた", category: .study, actDate: cal.date(byAdding: .day, value: -4, to: now)!, recipientName: "田中", isReported: false)
-        let act2 = KindnessAct(id: "a2", benefactorId: "b1", title: "父のPCを修理した", description: "マルウェアに感染したPCをクリーンアップして修復した", category: .labor, actDate: cal.date(byAdding: .day, value: -7, to: now)!, recipientName: "父", isReported: true)
+        let act2 = KindnessAct(id: "a2", benefactorId: "b1", title: "父のPCを修理した", description: "マルウェアに感染したPCをクリーンアップした", category: .labor, actDate: cal.date(byAdding: .day, value: -7, to: now)!, recipientName: "父", isReported: true)
         let act3 = KindnessAct(id: "a3", benefactorId: "b3", title: "新入社員研修のメンター", description: "新入社員のオンボーディングをサポートした", category: .skill, actDate: cal.date(byAdding: .day, value: -11, to: now)!, recipientName: "新入社員", isReported: true)
-        let act4 = KindnessAct(id: "a4", benefactorId: "b1", title: "友人の引越しを手伝った", description: "重い荷物を運ぶのを手伝った", category: .labor, actDate: cal.date(byAdding: .day, value: -40, to: now)!, recipientName: "佐藤", isReported: true)
-        kindnessActs = [act1, act2, act3, act4]
-
+        kindnessActs = [act1, act2, act3]
         let r1 = Report(id: "r1", kindnessActId: "a2", benefactorId: "b1", activityTitle: "父のPCを修理した", benefactorName: "田中太郎（父）", message: "お父さんのおかげで困っている人を助けられました。", status: .sent, createdAt: cal.date(byAdding: .day, value: -7, to: now)!)
-        let r2 = Report(id: "r2", kindnessActId: "a3", benefactorId: "b3", activityTitle: "新入社員研修のメンター", benefactorName: "佐藤先生", message: "先生に進路を教えていただいたように、後輩の道を照らせました。", status: .sent, createdAt: cal.date(byAdding: .day, value: -11, to: now)!)
-        reports = [r1, r2]
+        reports = [r1]
     }
 }

@@ -73,7 +73,16 @@ export const typeDefs = gql`
     health: String
   }
 
+  type AuthPayload {
+    token: String!
+    user: User!
+  }
+
   type Mutation {
+    # 認証
+    register(email: String!, name: String!, password: String!): AuthPayload!
+    login(email: String!, password: String!): AuthPayload!
+
     # ユーザー
     createUser(email: String!, name: String!, password: String!): User
     updateUser(id: ID!, name: String, bio: String, isPublic: Boolean): User
