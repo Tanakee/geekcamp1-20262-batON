@@ -116,7 +116,14 @@ export const resolvers = {
         `UPDATE reports SET status = 'SENT', sent_at = NOW() WHERE id = $1 RETURNING *`,
         [id]
       );
-      return result.rows[0];
+      const report = result.rows[0];
+      if (report) {
+        await pool.query(
+          `UPDATE kindness_acts SET is_reported = true, reported_at = NOW() WHERE id = $1`,
+          [report.kindness_act_id]
+        );
+      }
+      return report;
     }
   }
 };
