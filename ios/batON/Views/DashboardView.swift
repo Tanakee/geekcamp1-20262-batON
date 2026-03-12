@@ -50,13 +50,9 @@ struct DashboardView: View {
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(Color.batTextPrimary)
                             Spacer()
-                            NavigationLink(destination: GratitudeChain3DView()
-                                .environmentObject(appViewModel)
-                            ) {
-                                Text("詳細 →")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(Color.batSecondary)
-                            }
+                            Text("下のボタンから3D表示")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color.batTextSecondary)
                         }
 
                         VStack(spacing: 0) {
