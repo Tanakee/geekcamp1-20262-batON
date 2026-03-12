@@ -1,12 +1,18 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+
+const generateToken = (userId) => {
+  return jwt.sign({ userId }, process.env.JWT_SECRET || 'dev-secret', {
+    expiresIn: process.env.JWT_EXPIRY || '24h'
+  });
+};
+
 export const resolvers = {
   Query: {
     health: () => 'OK',
 
     user: async (_, { id }, { pool }) => {
-      const result = await pool.query(
-        'SELECT * FROM users WHERE id = $1',
-        [id]
-      );
+      const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
       return result.rows[0] || null;
     },
 
@@ -36,21 +42,45 @@ export const resolvers = {
   },
 
   Mutation: {
-    createUser: async (_, { email, name, password }, { pool }) => {
+    register: async (_, { email, name, password }, { pool }) => {
+      const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+      if (existing.rows.length > 0) {
+        throw new Error('このメールアドレスは既に登録されています');
+      }
+      const hash = await bcrypt.hash(password, 10);
       const result = await pool.query(
         `INSERT INTO users (email, name, password_hash, is_public, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, NOW(), NOW())
+         VALUES ($1, $2, $3, true, NOW(), NOW())
          RETURNING id, email, name, is_public, created_at, updated_at`,
-        [email, name, password, true]
+        [email, name, hash]
+      );
+      const user = result.rows[0];
+      return { token: generateToken(user.id), user };
+    },
+
+    login: async (_, { email, password }, { pool }) => {
+      const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+      const user = result.rows[0];
+      if (!user) throw new Error('メールアドレスまたはパスワードが間違っています');
+
+      const valid = await bcrypt.compare(password, user.password_hash);
+      if (!valid) throw new Error('メールアドレスまたはパスワードが間違っています');
+
+      return { token: generateToken(user.id), user };
+    },
+
+    createUser: async (_, { email, name, password }, { pool }) => {
+      const hash = await bcrypt.hash(password, 10);
+      const result = await pool.query(
+        `INSERT INTO users (email, name, password_hash, is_public, created_at, updated_at)
+         VALUES ($1, $2, $3, true, NOW(), NOW())
+         RETURNING id, email, name, is_public, created_at, updated_at`,
+        [email, name, hash]
       );
       return result.rows[0];
     },
 
-    createBenefactor: async (
-      _,
-      { userId, name, relation, kindnessDescription },
-      { pool }
-    ) => {
+    createBenefactor: async (_, { userId, name, relation, kindnessDescription }, { pool }) => {
       const result = await pool.query(
         `INSERT INTO benefactors (user_id, name, relation, kindness_description, created_at, updated_at)
          VALUES ($1, $2, $3, $4, NOW(), NOW())
@@ -60,20 +90,7 @@ export const resolvers = {
       return result.rows[0];
     },
 
-    createKindnessAct: async (
-      _,
-      {
-        userId,
-        benefactorId,
-        title,
-        description,
-        category,
-        actDate,
-        location,
-        recipientName
-      },
-      { pool }
-    ) => {
+    createKindnessAct: async (_, { userId, benefactorId, title, description, category, actDate, location, recipientName }, { pool }) => {
       const result = await pool.query(
         `INSERT INTO kindness_acts
          (user_id, benefactor_id, title, description, category, act_date, location, recipient_name, created_at, updated_at)
@@ -84,11 +101,7 @@ export const resolvers = {
       return result.rows[0];
     },
 
-    createReport: async (
-      _,
-      { kindnessActId, benefactorId, userId, message },
-      { pool }
-    ) => {
+    createReport: async (_, { kindnessActId, benefactorId, userId, message }, { pool }) => {
       const result = await pool.query(
         `INSERT INTO reports (kindness_act_id, benefactor_id, user_id, message, status, created_at)
          VALUES ($1, $2, $3, $4, 'DRAFT', NOW())

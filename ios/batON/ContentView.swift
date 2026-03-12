@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var appViewModel = AppViewModel()
+    @EnvironmentObject var authViewModel: AuthViewModel
 
     var body: some View {
         TabView {
@@ -28,6 +29,9 @@ struct ContentView: View {
                 .tabItem { Label("プロフィール", systemImage: "person.fill") }
         }
         .environmentObject(appViewModel)
+        .onAppear {
+            appViewModel.loadFromAPI(userId: authViewModel.currentUserId)
+        }
     }
 }
 
