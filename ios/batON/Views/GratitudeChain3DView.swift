@@ -281,15 +281,49 @@ struct GratitudeChainSceneView: UIViewRepresentable {
 
 // MARK: - SwiftUI ラッパー
 struct GratitudeChain3DView: View {
-    @State private var selectedNode: String? = nil
+    @EnvironmentObject var appViewModel: AppViewModel
+    var userName: String = "あなた"
 
-    let sampleNodes: [ChainNodeData] = [
-        ChainNodeData(id: "b1", name: "田中太郎", role: .benefactor, level: 0, connections: ["u1"]),
-        ChainNodeData(id: "u1", name: "あなた", role: .user, level: 1, connections: ["r1", "r2", "r3"]),
-        ChainNodeData(id: "r1", name: "山田", role: .recipient, level: 2),
-        ChainNodeData(id: "r2", name: "佐藤", role: .recipient, level: 2),
-        ChainNodeData(id: "r3", name: "鈴木", role: .recipient, level: 2),
-    ]
+    // 実データからノードを構築
+    private var chainNodes: [ChainNodeData] {
+        let userId = "u1"
+        var nodes: [ChainNodeData] = []
+
+        // 恩人ノード（ユーザーノードに接続）
+        let benefactorIds = appViewModel.benefactors.map { $0.id }
+        for b in appViewModel.benefactors {
+            nodes.append(ChainNodeData(id: b.id, name: b.name, role: .benefactor, level: 0, connections: [userId]))
+        }
+
+        // 受益者ノード（重複を名前で排除）
+        var recipientNames: [String] = []
+        var recipientNodes: [ChainNodeData] = []
+        for act in appViewModel.kindnessActs {
+            let name = act.recipientName
+            if !recipientNames.contains(name) {
+                recipientNames.append(name)
+                recipientNodes.append(ChainNodeData(id: "r_\(name)", name: name, role: .recipient, level: 2))
+            }
+        }
+
+        // ユーザーノード（受益者に接続）
+        let recipientIds = recipientNodes.map { $0.id }
+        let userNode = ChainNodeData(id: userId, name: userName, role: .user, level: 1, connections: recipientIds)
+        nodes.append(userNode)
+        nodes.append(contentsOf: recipientNodes)
+
+        // データがない場合はサンプルを返す
+        if nodes.count == 1 {
+            return [
+                ChainNodeData(id: userId, name: userName, role: .user, level: 1, connections: [])
+            ]
+        }
+        return nodes
+    }
+
+    private var benefactorCount: Int { appViewModel.benefactors.count }
+    private var recipientCount: Int { Set(appViewModel.kindnessActs.map { $0.recipientName }).count }
+    private var connectionCount: Int { benefactorCount + recipientCount }
 
     var body: some View {
         ZStack {
@@ -310,12 +344,29 @@ struct GratitudeChain3DView: View {
                 }
                 .padding()
 
-                // 3D ビュー
-                GratitudeChainSceneView(nodes: sampleNodes)
+                if appViewModel.benefactors.isEmpty && appViewModel.kindnessActs.isEmpty {
+                    // Empty State
+                    VStack(spacing: 16) {
+                        Text("🌐")
+                            .font(.system(size: 64))
+                        Text("チェーンがまだありません")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(Color.batTextSecondary)
+                        Text("恩人を登録して活動を記録すると\nここに感謝のつながりが広がります")
+                            .font(.system(size: 13))
+                            .foregroundColor(Color.batTextSecondary)
+                            .multilineTextAlignment(.center)
+                    }
                     .frame(maxWidth: .infinity)
-                    .frame(height: UIScreen.main.bounds.height * 0.55)
-                    .cornerRadius(20)
-                    .padding(.horizontal)
+                    .frame(height: UIScreen.main.bounds.height * 0.45)
+                } else {
+                    // 3D ビュー
+                    GratitudeChainSceneView(nodes: chainNodes)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: UIScreen.main.bounds.height * 0.55)
+                        .cornerRadius(20)
+                        .padding(.horizontal)
+                }
 
                 // 凡例
                 HStack(spacing: 24) {
@@ -325,13 +376,13 @@ struct GratitudeChain3DView: View {
                 }
                 .padding(.top, 20)
 
-                // 統計
+                // 統計（実データ）
                 HStack(spacing: 0) {
-                    Chain3DStatItem(value: "1", label: "恩人")
+                    Chain3DStatItem(value: "\(benefactorCount)", label: "恩人")
                     Divider().frame(height: 36).background(Color.batCardLight)
-                    Chain3DStatItem(value: "3", label: "受益者")
+                    Chain3DStatItem(value: "\(recipientCount)", label: "受益者")
                     Divider().frame(height: 36).background(Color.batCardLight)
-                    Chain3DStatItem(value: "4", label: "繋がり")
+                    Chain3DStatItem(value: "\(connectionCount)", label: "繋がり")
                 }
                 .padding(.vertical, 16)
                 .background(Color.batCard)
@@ -380,4 +431,5 @@ struct Chain3DStatItem: View {
 
 #Preview {
     GratitudeChain3DView()
+        .environmentObject(AppViewModel())
 }
