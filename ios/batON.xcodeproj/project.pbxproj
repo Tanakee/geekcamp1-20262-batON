@@ -10,9 +10,22 @@
 		8E4D00E12F6128DB00EA498D /* batON.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = batON.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		8E4D00F12F6128DB00EA498D /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 8E4D00E02F6128DB00EA498D /* batON */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		8E4D00E32F6128DB00EA498D /* batON */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				8E4D00F12F6128DB00EA498D /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+			);
 			path = batON;
 			sourceTree = "<group>";
 		};
