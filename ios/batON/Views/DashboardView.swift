@@ -4,6 +4,7 @@ struct DashboardView: View {
     @EnvironmentObject var appViewModel: AppViewModel
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var showAddAct = false
+    @State private var showConversations = false
 
     var body: some View {
         ZStack {
@@ -18,16 +19,39 @@ struct DashboardView: View {
                             Text("こんにちは 👋")
                                 .font(.system(size: 14))
                                 .foregroundColor(Color.batTextSecondary)
-                            Text("今日も恩を送ろう")
+                            Text(authViewModel.currentUserName.isEmpty ? "今日も恩を送ろう" : "\(authViewModel.currentUserName)さん")
                                 .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(Color.batTextPrimary)
                         }
                         Spacer()
+
+                        // DM ボタン
+                        Button {
+                            showConversations = true
+                        } label: {
+                            ZStack(alignment: .topTrailing) {
+                                Image(systemName: "bubble.right.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(Color.batTextSecondary)
+                                    .frame(width: 44, height: 44)
+                                    .background(Color.batCard)
+                                    .clipShape(Circle())
+
+                                if appViewModel.unreadMessageCount > 0 {
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 10, height: 10)
+                                        .offset(x: 2, y: -2)
+                                }
+                            }
+                        }
+                        .padding(.trailing, 8)
+
                         Circle()
                             .fill(LinearGradient.batPrimaryGradient)
                             .frame(width: 44, height: 44)
                             .overlay(
-                                Text(String(authViewModel.currentUserName.prefix(1)))
+                                Text(String(authViewModel.currentUserName.prefix(1).isEmpty ? "?" : authViewModel.currentUserName.prefix(1)))
                                     .font(.system(size: 16, weight: .bold))
                                     .foregroundColor(.white)
                             )
@@ -124,6 +148,13 @@ struct DashboardView: View {
         .sheet(isPresented: $showAddAct) {
             AddKindnessActView()
                 .environmentObject(appViewModel)
+        }
+        .sheet(isPresented: $showConversations) {
+            NavigationView {
+                ConversationsView()
+                    .environmentObject(appViewModel)
+                    .environmentObject(authViewModel)
+            }
         }
         .overlay(loadingOverlay)
         .overlay(errorBanner, alignment: .top)

@@ -33,20 +33,11 @@ struct ConversationsView: View {
 
                 // 会話一覧
                 if conversations.isEmpty {
-                    VStack(spacing: 16) {
-                        Spacer()
-                        Image(systemName: "bubble.left.and.bubble.right")
-                            .font(.system(size: 48))
-                            .foregroundColor(Color.batTextSecondary)
-                        Text("メッセージがありません")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Color.batTextPrimary)
-                        Text("誰かとチャットを始めましょう")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color.batTextSecondary)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
+                    EmptyStateView(
+                        icon: "bubble.left.and.bubble.right",
+                        title: "メッセージがありません",
+                        message: "マッチングした相手とチャットを始めましょう"
+                    )
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {

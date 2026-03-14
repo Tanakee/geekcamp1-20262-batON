@@ -61,20 +61,11 @@ struct FeedView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if filteredPosts.isEmpty {
-                    VStack(spacing: 16) {
-                        Spacer()
-                        Image(systemName: "sparkles")
-                            .font(.system(size: 48))
-                            .foregroundColor(Color.batTextSecondary)
-                        Text("投稿がありません")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Color.batTextPrimary)
-                        Text("新しい投稿が増えるのを待ちましょう")
-                            .font(.system(size: 13))
-                            .foregroundColor(Color.batTextSecondary)
-                        Spacer()
-                    }
-                    .frame(maxWidth: .infinity)
+                    EmptyStateView(
+                        icon: "sparkles",
+                        title: "投稿がありません",
+                        message: "新しい投稿が増えるのを待ちましょう"
+                    )
                 } else {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(spacing: 12) {

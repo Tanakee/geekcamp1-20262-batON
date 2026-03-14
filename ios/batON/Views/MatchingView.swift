@@ -98,20 +98,11 @@ struct MatchingView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer()
-            Image(systemName: "heart.slash")
-                .font(.system(size: 48))
-                .foregroundColor(Color.batTextSecondary)
-            Text("マッチング相手がいません")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Color.batTextPrimary)
-            Text("新しい投稿を待ちましょう")
-                .font(.system(size: 13))
-                .foregroundColor(Color.batTextSecondary)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity)
+        EmptyStateView(
+            icon: "heart.slash",
+            title: "マッチング相手がいません",
+            message: "フィードに投稿してスキルをアピールしましょう"
+        )
     }
 }
 
