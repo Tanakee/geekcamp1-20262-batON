@@ -101,21 +101,29 @@ struct GratitudeChainSceneView: UIViewRepresentable {
     private func buildGraph(scene: SCNScene) {
         var nodePositions: [String: SCNVector3] = [:]
 
+        let benefactors = nodes.filter { $0.level == 0 }
+        let recipients  = nodes.filter { $0.level == 2 }
+
         // ノードの位置を決定
         for node in nodes {
             let pos: SCNVector3
             switch node.level {
-            case 0: // 恩人（最上部）
-                pos = SCNVector3(0, 1.2, 0)
+            case 0: // 恩人（上部・扇形配置）
+                let total = benefactors.count
+                let idx = benefactors.firstIndex(where: { $0.id == node.id }) ?? 0
+                pos = arcPosition(index: idx, total: total,
+                                  y: 1.3, radius: arcRadius(total),
+                                  startAngle: -.pi / 2 - spreadAngle(total) / 2,
+                                  spread: spreadAngle(total))
             case 1: // ユーザー（中央）
                 pos = SCNVector3(0, 0, 0)
-            case 2: // 受益者（最下部、放射状）
-                let recipients = nodes.filter { $0.level == 2 }
-                let idx = recipients.firstIndex(where: { $0.id == node.id }) ?? 0
+            case 2: // 受益者（下部・扇形配置）
                 let total = recipients.count
-                let angle = (Float(idx) / Float(total)) * Float.pi * 2
-                let radius: Float = 1.0
-                pos = SCNVector3(cos(angle) * radius, -1.0, sin(angle) * radius * 0.5)
+                let idx = recipients.firstIndex(where: { $0.id == node.id }) ?? 0
+                pos = arcPosition(index: idx, total: total,
+                                  y: -1.3, radius: arcRadius(total),
+                                  startAngle: -.pi / 2 - spreadAngle(total) / 2,
+                                  spread: spreadAngle(total))
             default:
                 pos = SCNVector3(0, 0, 0)
             }
@@ -132,6 +140,33 @@ struct GratitudeChainSceneView: UIViewRepresentable {
                 }
             }
         }
+    }
+
+    /// ノード数に応じた扇形の広がり角度（ラジアン）
+    private func spreadAngle(_ total: Int) -> Float {
+        switch total {
+        case 1: return 0
+        case 2: return .pi * 0.6
+        case 3: return .pi * 0.8
+        default: return .pi * 1.1 // 4個以上は広め
+        }
+    }
+
+    /// ノード数に応じた配置半径
+    private func arcRadius(_ total: Int) -> Float {
+        switch total {
+        case 1: return 0
+        case 2: return 0.9
+        case 3: return 1.0
+        default: return 1.1
+        }
+    }
+
+    /// 扇形上の位置を計算（XZ平面に展開、Yは固定）
+    private func arcPosition(index: Int, total: Int, y: Float, radius: Float, startAngle: Float, spread: Float) -> SCNVector3 {
+        guard total > 1 else { return SCNVector3(0, y, 0) }
+        let angle = startAngle + spread * Float(index) / Float(total - 1)
+        return SCNVector3(cos(angle) * radius, y, sin(angle) * radius * 0.4)
     }
 
     // MARK: - ノード球体を追加
