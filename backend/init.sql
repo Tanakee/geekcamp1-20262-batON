@@ -175,3 +175,34 @@ INSERT INTO skills (name, category) VALUES
 ('音楽', 'エンターテイメント'),
 ('執筆', 'エンターテイメント')
 ON CONFLICT (name) DO NOTHING;
+
+-- テストユーザーデータ
+INSERT INTO users (id, email, name, password_hash, bio, skills, avatar_url, rating, total_ratings, followers_count, following_count, posts_count, completed_acts_count, is_active, created_at, updated_at) VALUES
+(gen_random_uuid(), 'tanaka@example.com', '田中太郎', '$2b$10$example_hash_1', 'プログラマー、IoT好き', '{"プログラミング","ウェブデザイン"}', NULL, 4.8, 10, 50, 30, 15, 8, true, NOW(), NOW()),
+(gen_random_uuid(), 'yamada@example.com', '山田花子', '$2b$10$example_hash_2', 'デザイナー、UI/UX専門', '{"ウェブデザイン","イラスト"}', NULL, 4.9, 8, 45, 25, 12, 6, true, NOW(), NOW()),
+(gen_random_uuid(), 'suzuki@example.com', '鈴木一郎', '$2b$10$example_hash_3', 'ビジネスコンサル、起業家', '{"ビジネスコンサル","マーケティング"}', NULL, 4.7, 12, 60, 40, 20, 10, true, NOW(), NOW()),
+(gen_random_uuid(), 'sato@example.com', '佐藤美優', '$2b$10$example_hash_4', '英語講師、留学経験あり', '{"英語教育"}', NULL, 4.6, 15, 70, 35, 25, 12, true, NOW(), NOW())
+ON CONFLICT DO NOTHING;
+
+-- サンプルポスト
+INSERT INTO posts (id, user_id, type, title, description, category, tags, location, status, likes_count, comments_count, created_at, updated_at)
+SELECT
+  gen_random_uuid(),
+  (SELECT id FROM users WHERE email = 'tanaka@example.com' LIMIT 1),
+  'help_offer',
+  'Swiftアプリ開発のお手伝いします',
+  'iOSアプリ開発のご経験がある方、技術的なご相談や開発サポートのお手伝いができます。初心者向けのレッスンから本格的なアプリ開発まで対応可能です。',
+  'プログラミング',
+  '{"iOS","Swift","アプリ開発"}',
+  '東京都渋谷区',
+  'open',
+  0,
+  0,
+  NOW(),
+  NOW()
+WHERE NOT EXISTS(SELECT 1 FROM posts WHERE title = 'Swiftアプリ開発のお手伝いします');
+
+-- サンプル通知設定
+INSERT INTO notification_settings (user_id, match_notifications, message_notifications, comment_notifications, like_notifications, follow_notifications, rating_notifications, created_at, updated_at)
+SELECT id, true, true, true, true, true, true, NOW(), NOW() FROM users
+ON CONFLICT DO NOTHING;
