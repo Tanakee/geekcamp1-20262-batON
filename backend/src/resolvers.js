@@ -102,10 +102,12 @@ const mapNotificationSettings = (row) => row ? {
   userId: row.user_id,
   matchNotifications: row.match_notifications !== false,
   messageNotifications: row.message_notifications !== false,
-  commentNotifications: row.comment_notifications !== false,
-  likeNotifications: row.like_notifications !== false,
+  postLikeNotifications: row.post_like_notifications !== false,
+  postCommentNotifications: row.post_comment_notifications !== false,
   followNotifications: row.follow_notifications !== false,
-  ratingNotifications: row.rating_notifications !== false,
+  skillMatchNotifications: row.skill_match_notifications !== false,
+  notificationStartHour: row.notification_start_hour || 8,
+  notificationEndHour: row.notification_end_hour || 22,
   createdAt: row.created_at,
   updatedAt: row.updated_at
 } : null;
@@ -570,10 +572,12 @@ export const resolvers = {
       const fields = {
         matchNotifications: 'match_notifications',
         messageNotifications: 'message_notifications',
-        commentNotifications: 'comment_notifications',
-        likeNotifications: 'like_notifications',
+        postLikeNotifications: 'post_like_notifications',
+        postCommentNotifications: 'post_comment_notifications',
         followNotifications: 'follow_notifications',
-        ratingNotifications: 'rating_notifications'
+        skillMatchNotifications: 'skill_match_notifications',
+        notificationStartHour: 'notification_start_hour',
+        notificationEndHour: 'notification_end_hour'
       };
 
       for (const [key, col] of Object.entries(fields)) {

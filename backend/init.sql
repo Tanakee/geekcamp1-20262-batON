@@ -117,10 +117,12 @@ CREATE TABLE IF NOT EXISTS notification_settings (
   user_id UUID UNIQUE NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   match_notifications BOOLEAN DEFAULT true,
   message_notifications BOOLEAN DEFAULT true,
-  comment_notifications BOOLEAN DEFAULT true,
-  like_notifications BOOLEAN DEFAULT true,
+  post_like_notifications BOOLEAN DEFAULT true,
+  post_comment_notifications BOOLEAN DEFAULT true,
   follow_notifications BOOLEAN DEFAULT true,
-  rating_notifications BOOLEAN DEFAULT true,
+  skill_match_notifications BOOLEAN DEFAULT true,
+  notification_start_hour INT DEFAULT 8,
+  notification_end_hour INT DEFAULT 22,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
