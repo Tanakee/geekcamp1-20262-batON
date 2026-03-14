@@ -54,6 +54,10 @@ struct GratitudeChainSceneView: UIViewRepresentable {
         buildGraph(scene: scene)
         addStarfield(scene: scene)
 
+        // 回転軸をチェーン中心（ユーザーノード＝原点）に固定
+        sceneView.defaultCameraController.interactionMode = .orbitTurntable
+        sceneView.defaultCameraController.target = SCNVector3(0, 0, 0)
+
         return sceneView
     }
 
