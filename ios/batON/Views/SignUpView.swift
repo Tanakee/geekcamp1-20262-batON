@@ -7,6 +7,16 @@ struct SignUpView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
+    @State private var bio = ""
+    @State private var selectedSkills: [String] = []
+
+    private let availableSkills = [
+        "プログラミング", "ウェブデザイン", "データ分析",
+        "英語教育", "日本語教育", "ビジネスコンサル", "マーケティング",
+        "イラスト", "写真", "動画編集",
+        "料理", "フィットネス", "ガーデニング",
+        "音楽", "執筆"
+    ]
 
     var body: some View {
         ZStack {
@@ -54,6 +64,46 @@ struct SignUpView: View {
                         BatSecureField(label: "パスワード", text: $password)
                         BatSecureField(label: "パスワード（確認）", text: $confirmPassword)
 
+                        // 自己紹介
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("自己紹介")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(Color.batTextPrimary)
+                            TextField("自分のことを紹介してください（任意）", text: $bio)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .font(.system(size: 13))
+                                .frame(height: 80)
+                        }
+
+                        // スキル選択
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("スキル（最大5個まで選択）")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(Color.batTextPrimary)
+
+                            VStack(spacing: 8) {
+                                ForEach(availableSkills, id: \.self) { skill in
+                                    Button {
+                                        if selectedSkills.contains(skill) {
+                                            selectedSkills.removeAll { $0 == skill }
+                                        } else if selectedSkills.count < 5 {
+                                            selectedSkills.append(skill)
+                                        }
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: selectedSkills.contains(skill) ? "checkmark.square.fill" : "square")
+                                                .foregroundColor(selectedSkills.contains(skill) ? Color.batPrimary : Color.batTextSecondary)
+                                            Text(skill)
+                                                .font(.system(size: 13))
+                                                .foregroundColor(Color.batTextPrimary)
+                                            Spacer()
+                                        }
+                                        .padding(.vertical, 8)
+                                    }
+                                }
+                            }
+                        }
+
                         if let error = authViewModel.errorMessage {
                             Text(error)
                                 .font(.system(size: 13))
@@ -74,7 +124,7 @@ struct SignUpView: View {
                                 if password != confirmPassword {
                                     authViewModel.errorMessage = "パスワードが一致しません"
                                 } else {
-                                    authViewModel.signUp(name: name, email: email, password: password)
+                                    authViewModel.signUp(name: name, email: email, password: password, bio: bio, skills: selectedSkills)
                                 }
                             }
                         }

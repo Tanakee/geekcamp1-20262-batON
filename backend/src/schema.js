@@ -165,7 +165,7 @@ export const typeDefs = gql`
 
   type Mutation {
     # 認証
-    register(email: String!, name: String!, password: String!, skills: [String!]): AuthPayload!
+    register(email: String!, name: String!, password: String!, bio: String, skills: [String!]): AuthPayload!
     login(email: String!, password: String!): AuthPayload!
 
     # ユーザー
