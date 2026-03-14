@@ -103,10 +103,12 @@ export const typeDefs = gql`
     userId: ID!
     matchNotifications: Boolean!
     messageNotifications: Boolean!
-    commentNotifications: Boolean!
-    likeNotifications: Boolean!
+    postLikeNotifications: Boolean!
+    postCommentNotifications: Boolean!
     followNotifications: Boolean!
-    ratingNotifications: Boolean!
+    skillMatchNotifications: Boolean!
+    notificationStartHour: Int!
+    notificationEndHour: Int!
     createdAt: String!
     updatedAt: String!
   }
@@ -219,10 +221,12 @@ export const typeDefs = gql`
       userId: ID!
       matchNotifications: Boolean
       messageNotifications: Boolean
-      commentNotifications: Boolean
-      likeNotifications: Boolean
+      postLikeNotifications: Boolean
+      postCommentNotifications: Boolean
       followNotifications: Boolean
-      ratingNotifications: Boolean
+      skillMatchNotifications: Boolean
+      notificationStartHour: Int
+      notificationEndHour: Int
     ): NotificationSettings!
   }
 `;
