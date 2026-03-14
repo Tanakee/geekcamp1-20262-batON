@@ -5,6 +5,7 @@ struct DashboardView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var showAddAct = false
     @State private var showConversations = false
+    @State private var showChain = false
 
     var body: some View {
         ZStack {
@@ -74,9 +75,17 @@ struct DashboardView: View {
                                 .font(.system(size: 18, weight: .bold))
                                 .foregroundColor(Color.batTextPrimary)
                             Spacer()
-                            Text("下のボタンから3D表示")
-                                .font(.system(size: 12))
-                                .foregroundColor(Color.batTextSecondary)
+                            Button {
+                                showChain = true
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "globe.americas.fill")
+                                        .font(.system(size: 11))
+                                    Text("3D表示")
+                                        .font(.system(size: 12, weight: .semibold))
+                                }
+                                .foregroundColor(Color.batPrimary)
+                            }
                         }
 
                         VStack(spacing: 0) {
@@ -155,6 +164,11 @@ struct DashboardView: View {
                     .environmentObject(appViewModel)
                     .environmentObject(authViewModel)
             }
+        }
+        .fullScreenCover(isPresented: $showChain) {
+            ChainFullScreenView()
+                .environmentObject(appViewModel)
+                .environmentObject(authViewModel)
         }
         .overlay(loadingOverlay)
         .overlay(errorBanner, alignment: .top)

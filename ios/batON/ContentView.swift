@@ -1,14 +1,14 @@
 import SwiftUI
 
 enum Tab {
-    case home, feed, chain, matching, profile
+    case home, feed, matching, profile
 }
 
 struct ContentView: View {
     @StateObject private var appViewModel = AppViewModel()
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var selectedTab: Tab = .home
-    @State private var showChain = false
+    @State private var showCreatePost = false
     @State private var showConversations = false
 
     var body: some View {
@@ -20,8 +20,6 @@ struct ContentView: View {
                     NavigationView { DashboardView() }
                 case .feed:
                     NavigationView { FeedView() }
-                case .chain:
-                    Color.clear // 中央ボタンはシートで開く
                 case .matching:
                     NavigationView { SearchView() }
                 case .profile:
@@ -29,10 +27,10 @@ struct ContentView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.bottom, 80) // タブバーの高さ分
+            .padding(.bottom, 80)
 
             // カスタムタブバー
-            CustomTabBar(selectedTab: $selectedTab, showChain: $showChain, unreadCount: appViewModel.unreadMessageCount)
+            CustomTabBar(selectedTab: $selectedTab, showCreatePost: $showCreatePost, unreadCount: appViewModel.unreadMessageCount)
         }
         .environmentObject(appViewModel)
         .ignoresSafeArea(.keyboard)
@@ -44,10 +42,9 @@ struct ContentView: View {
             appViewModel.loadFromAPI(userId: newId)
             appViewModel.loadPosts()
         }
-        .fullScreenCover(isPresented: $showChain) {
-            ChainFullScreenView()
+        .sheet(isPresented: $showCreatePost) {
+            CreatePostView()
                 .environmentObject(appViewModel)
-                .environmentObject(authViewModel)
         }
         .sheet(isPresented: $showConversations) {
             NavigationView {
@@ -62,7 +59,7 @@ struct ContentView: View {
 // MARK: - カスタムタブバー
 struct CustomTabBar: View {
     @Binding var selectedTab: Tab
-    @Binding var showChain: Bool
+    @Binding var showCreatePost: Bool
     var unreadCount: Int = 0
 
     var body: some View {
@@ -84,10 +81,10 @@ struct CustomTabBar: View {
                     .shadow(color: .black.opacity(0.4), radius: 16, x: 0, y: -4)
             )
 
-            // 中央の感謝チェーンボタン
+            // 中央の投稿ボタン
             VStack(spacing: 0) {
                 Button {
-                    showChain = true
+                    showCreatePost = true
                 } label: {
                     ZStack {
                         Circle()
@@ -96,11 +93,8 @@ struct CustomTabBar: View {
                             .shadow(color: Color.batPrimary.opacity(0.6), radius: 14, x: 0, y: 4)
 
                         VStack(spacing: 2) {
-                            Image(systemName: "globe.americas.fill")
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(.white)
-                            Text("チェーン")
-                                .font(.system(size: 9, weight: .bold))
+                            Image(systemName: "plus")
+                                .font(.system(size: 26, weight: .bold))
                                 .foregroundColor(.white)
                         }
                     }
