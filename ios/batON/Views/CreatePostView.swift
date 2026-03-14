@@ -15,7 +15,7 @@ struct CreatePostView: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
 
-    let categories = ["IT", "教育", "ビジネス", "クリエイティブ", "ライフスタイル", "エンターテイメント"]
+    let categories = ["IT", "教育", "ビジネス", "クリエイティブ", "ライフスタイル", "エンターテイメント", "その他"]
 
     var isFormValid: Bool {
         !title.trimmingCharacters(in: .whitespaces).isEmpty &&
