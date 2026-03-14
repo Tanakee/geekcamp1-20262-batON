@@ -342,17 +342,17 @@ export const resolvers = {
   },
 
   Mutation: {
-    register: async (_, { email, name, password, skills = [] }, { pool }) => {
+    register: async (_, { email, name, password, bio = '', skills = [] }, { pool }) => {
       const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
       if (existing.rows.length > 0) {
         throw new Error('このメールアドレスは既に登録されています');
       }
       const hash = await bcrypt.hash(password, 10);
       const result = await pool.query(
-        `INSERT INTO users (email, name, password_hash, skills, rating, total_ratings, followers_count, following_count, posts_count, completed_acts_count, is_active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, 5.0, 0, 0, 0, 0, 0, true, NOW(), NOW())
+        `INSERT INTO users (email, name, bio, password_hash, skills, rating, total_ratings, followers_count, following_count, posts_count, completed_acts_count, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, 5.0, 0, 0, 0, 0, 0, true, NOW(), NOW())
          RETURNING *`,
-        [email, name, hash, skills]
+        [email, name, bio, hash, skills]
       );
       const user = mapUser(result.rows[0]);
       await pool.query(

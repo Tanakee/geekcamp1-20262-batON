@@ -82,7 +82,7 @@ class AuthViewModel: ObservableObject {
         }
     }
 
-    func signUp(name: String, email: String, password: String) {
+    func signUp(name: String, email: String, password: String, bio: String = "", skills: [String] = []) {
         guard !name.isEmpty, !email.isEmpty, !password.isEmpty else {
             errorMessage = "すべての項目を入力してください"
             return
@@ -91,17 +91,25 @@ class AuthViewModel: ObservableObject {
         errorMessage = nil
 
         let query = """
-        mutation Register($email: String!, $name: String!, $password: String!) {
-            register(email: $email, name: $name, password: $password) {
+        mutation Register($email: String!, $name: String!, $password: String!, $bio: String, $skills: [String!]) {
+            register(email: $email, name: $name, password: $password, bio: $bio, skills: $skills) {
                 token
                 user { id name email }
             }
         }
         """
 
+        var variables: [String: Any] = ["email": email, "name": name, "password": password]
+        if !bio.isEmpty {
+            variables["bio"] = bio
+        }
+        if !skills.isEmpty {
+            variables["skills"] = skills
+        }
+
         APIService.shared.execute(
             query: query,
-            variables: ["email": email, "name": name, "password": password]
+            variables: variables
         ) { [weak self] (result: Result<AuthData, Error>) in
             guard let self = self else { return }
             self.isLoading = false
@@ -115,11 +123,13 @@ class AuthViewModel: ObservableObject {
                 APIService.shared.savedUserId = payload.user.id
                 self.currentUserId = payload.user.id
                 self.currentUserName = payload.user.name
+                self.currentUserSkills = skills
                 self.isLoggedIn = true
             case .failure(let error):
                 // API接続失敗時はモック登録
                 if case APIError.networkError = error {
                     self.currentUserName = name
+                    self.currentUserSkills = skills
                     self.currentUserId = "mock-user"
                     self.isLoggedIn = true
                 } else {
