@@ -23,7 +23,7 @@ struct ContentView: View {
                 case .matching:
                     SearchView()
                 case .profile:
-                    NavigationView { ProfileView() }
+                    ProfileView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
