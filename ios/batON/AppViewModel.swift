@@ -318,6 +318,66 @@ class AppViewModel: ObservableObject {
         benefactors.first { $0.id == id }
     }
 
+    // MARK: - SNS ポスト作成
+    func createPost(type: String, title: String, description: String, category: String, tags: [String], location: String?) {
+        guard !userId.isEmpty, userId != "mock-user" else { return }
+
+        let mutation = """
+        mutation CreatePost($userId: ID!, $type: String!, $title: String!, $description: String!, $category: String, $tags: [String!], $location: String) {
+            createPost(userId: $userId, type: $type, title: $title, description: $description, category: $category, tags: $tags, location: $location) {
+                id userId type title description category tags location status likesCount commentsCount createdAt
+            }
+        }
+        """
+
+        struct CreatePostData: Decodable {
+            let createPost: APIPost
+        }
+
+        let vars: [String: Any] = [
+            "userId": userId,
+            "type": type,
+            "title": title,
+            "description": description,
+            "category": category,
+            "tags": tags,
+            "location": location ?? NSNull()
+        ]
+
+        APIService.shared.execute(query: mutation, variables: vars) { [weak self] (result: Result<CreatePostData, Error>) in
+            DispatchQueue.main.async {
+                if case .success(let data) = result {
+                    let formatter = ISO8601DateFormatter()
+                    let apiPost = data.createPost
+                    let postType = PostType(rawValue: apiPost.type) ?? .help_request
+                    let postStatus = PostStatus(rawValue: apiPost.status) ?? .open
+                    let date = formatter.date(from: apiPost.createdAt) ?? Date()
+                    let post = Post(
+                        id: apiPost.id,
+                        userId: apiPost.userId,
+                        userName: nil,
+                        type: postType,
+                        title: apiPost.title,
+                        description: apiPost.description,
+                        category: apiPost.category,
+                        tags: apiPost.tags ?? [],
+                        location: apiPost.location,
+                        status: postStatus,
+                        likesCount: apiPost.likesCount,
+                        commentsCount: apiPost.commentsCount,
+                        createdAt: date
+                    )
+                    // 投稿をリスト先頭に追加（ローカル更新）
+                    if self?.posts != nil {
+                        self?.posts.insert(post, at: 0)
+                    }
+                } else {
+                    self?.apiError = "ポストの作成に失敗しました"
+                }
+            }
+        }
+    }
+
     // MARK: - モックデータ（API未接続時のフォールバック）
     private func loadMockData() {
         let cal = Calendar.current
