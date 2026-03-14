@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>batON - 恩送りSNSプラットフォーム</title>
+  <style>
+    :root {
+      --primary: #7C3AED;
+      --primary-light: #A78BFA;
+      --secondary: #06B6D4;
+      --accent: #F59E0B;
+      --bg: #0F0A1E;
+      --bg2: #1A1035;
+      --card: #241B45;
+      --text: #F3F0FF;
+      --text2: #9CA3AF;
+      --gradient: linear-gradient(135deg, #7C3AED, #06B6D4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* ─── Slide Container ─── */
+    .slides { width: 100%; height: 100vh; position: relative; }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 60px;
+      opacity: 0;
+      transform: translateX(60px);
+      transition: all 0.5s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: all;
+    }
+
+    .slide.prev {
+      opacity: 0;
+      transform: translateX(-60px);
+    }
+
+    /* ─── Navigation ─── */
+    .nav {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+      background: rgba(36,27,69,0.8);
+      backdrop-filter: blur(12px);
+      padding: 10px 20px;
+      border-radius: 40px;
+      border: 1px solid rgba(124,58,237,0.3);
+    }
+
+    .nav button {
+      background: none;
+      border: none;
+      color: var(--text2);
+      font-size: 20px;
+      cursor: pointer;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .nav button:hover { background: rgba(124,58,237,0.3); color: var(--text); }
+
+    .nav .dots { display: flex; gap: 6px; }
+
+    .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--text2);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dot.active { background: var(--primary); width: 20px; border-radius: 4px; }
+
+    #slide-num { font-size: 12px; color: var(--text2); min-width: 40px; text-align: center; }
+
+    /* ─── Slide 1: Title ─── */
+    .slide-title {
+      background: radial-gradient(ellipse at top, #2D1B69 0%, var(--bg) 70%);
+    }
+
+    .logo-circle {
+      width: 120px; height: 120px;
+      background: var(--gradient);
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      margin-bottom: 32px;
+      box-shadow: 0 0 60px rgba(124,58,237,0.5);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+    h1.main-title {
+      font-size: 72px;
+      font-weight: 900;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .tagline {
+      font-size: 22px;
+      color: var(--text2);
+      margin-bottom: 48px;
+      text-align: center;
+    }
+
+    .badge-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .badge {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid;
+    }
+
+    .badge-purple { border-color: var(--primary); color: var(--primary-light); background: rgba(124,58,237,0.1); }
+    .badge-cyan { border-color: var(--secondary); color: var(--secondary); background: rgba(6,182,212,0.1); }
+    .badge-yellow { border-color: var(--accent); color: var(--accent); background: rgba(245,158,11,0.1); }
+
+    /* ─── Headings ─── */
+    .slide-heading {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--primary-light);
+      margin-bottom: 16px;
+    }
+
+    h2.section-title {
+      font-size: 48px;
+      font-weight: 800;
+      margin-bottom: 40px;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    /* ─── Cards ─── */
+    .card-grid {
+      display: grid;
+      gap: 20px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .grid-2 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid rgba(124,58,237,0.2);
+    }
+
+    .card-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+    }
+
+    .card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .card p {
+      font-size: 14px;
+      color: var(--text2);
+      line-height: 1.6;
+    }
+
+    /* ─── Pain Point Numbers ─── */
+    .stat-big {
+      font-size: 64px;
+      font-weight: 900;
+      background: var(--gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+
+    .stat-label { font-size: 16px; color: var(--text2); margin-top: 4px; }
+
+    /* ─── Tech Stack ─── */
+    .tech-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid rgba(124,58,237,0.2);
+    }
+
+    .tech-icon { font-size: 28px; min-width: 40px; text-align: center; }
+    .tech-name { font-size: 16px; font-weight: 700; margin-bottom: 2px; }
+    .tech-desc { font-size: 12px; color: var(--text2); }
+
+    /* ─── Feature Flow ─── */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .flow-step {
+      flex: 1;
+      text-align: center;
+      padding: 24px 16px;
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid rgba(124,58,237,0.2);
+    }
+
+    .flow-arrow {
+      font-size: 24px;
+      color: var(--primary-light);
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+
+    .flow-icon { font-size: 32px; margin-bottom: 10px; }
+    .flow-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .flow-desc { font-size: 11px; color: var(--text2); }
+
+    /* ─── Highlight Box ─── */
+    .highlight {
+      background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(6,182,212,0.15));
+      border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 20px;
+      padding: 32px 40px;
+      text-align: center;
+      max-width: 700px;
+    }
+
+    .highlight p {
+      font-size: 20px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    /* ─── Future List ─── */
+    .future-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .future-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 24px;
+      background: var(--card);
+      border-radius: 14px;
+      border-left: 3px solid var(--primary);
+    }
+
+    .future-phase {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary-light);
+      background: rgba(124,58,237,0.15);
+      padding: 4px 10px;
+      border-radius: 8px;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+
+    .future-text h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .future-text p { font-size: 13px; color: var(--text2); }
+
+    /* ─── End Slide ─── */
+    .slide-end {
+      background: radial-gradient(ellipse at center, #2D1B69 0%, var(--bg) 70%);
+    }
+
+    .chain-visual {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 40px;
+    }
+
+    .chain-node {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: var(--gradient);
+    }
+
+    .chain-link {
+      width: 40px; height: 3px;
+      background: var(--gradient);
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+<div class="slides" id="slides">
+
+  <!-- Slide 1: Title -->
+  <div class="slide slide-title active" id="s0">
+    <div class="logo-circle">🌟</div>
+    <h1 class="main-title">batON</h1>
+    <p class="tagline">恩送りをつなぐ、善意のSNSプラットフォーム</p>
+    <div class="badge-row">
+      <span class="badge badge-purple">iOS / SwiftUI</span>
+      <span class="badge badge-cyan">GraphQL API</span>
+      <span class="badge badge-yellow">PostgreSQL</span>
+      <span class="badge badge-purple">GeekCamp 2026</span>
+    </div>
+  </div>
+
+  <!-- Slide 2: Problem -->
+  <div class="slide" id="s1">
+    <p class="slide-heading">The Problem</p>
+    <h2 class="section-title">善意はあるのに、<br>つながれない</h2>
+    <div class="card-grid grid-3" style="max-width:860px">
+      <div class="card">
+        <div class="stat-big">68%</div>
+        <div class="stat-label">「誰かを助けたい」と思っているが行動できていない人の割合</div>
+      </div>
+      <div class="card">
+        <div class="stat-big">3x</div>
+        <div class="stat-label">スキルマッチがあると助け合いが3倍多く成立するという研究結果</div>
+      </div>
+      <div class="card">
+        <div class="stat-big">∞</div>
+        <div class="stat-label">善意がつながった時の波及効果 — 1人が3人を助け、3人がさらに…</div>
+      </div>
+    </div>
+    <div class="highlight" style="margin-top:32px">
+      <p>「助けたい人」と「助けを求める人」を<br>スキルベースでスマートにマッチングする</p>
+    </div>
+  </div>
+
+  <!-- Slide 3: What is batON -->
+  <div class="slide" id="s2">
+    <p class="slide-heading">The Solution</p>
+    <h2 class="section-title">batON とは？</h2>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="flow-icon">✍️</div>
+        <div class="flow-title">投稿</div>
+        <div class="flow-desc">「〇〇が得意、<br>助けます」を投稿</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-icon">🎯</div>
+        <div class="flow-title">マッチング</div>
+        <div class="flow-desc">スキルで<br>自動マッチング</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-icon">💬</div>
+        <div class="flow-title">DM・実施</div>
+        <div class="flow-desc">メッセージで<br>調整・実施</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="flow-icon">🔗</div>
+        <div class="flow-title">チェーン</div>
+        <div class="flow-desc">助けられた人が<br>次の人を助ける</div>
+      </div>
+    </div>
+    <div style="margin-top:32px; display:flex; gap:16px; flex-wrap:wrap; justify-content:center;">
+      <span class="badge badge-purple">フィード投稿</span>
+      <span class="badge badge-cyan">スキルマッチング</span>
+      <span class="badge badge-yellow">DMチャット</span>
+      <span class="badge badge-purple">感謝チェーン可視化</span>
+      <span class="badge badge-cyan">通知システム</span>
+    </div>
+  </div>
+
+  <!-- Slide 4: Features -->
+  <div class="slide" id="s3">
+    <p class="slide-heading">Features</p>
+    <h2 class="section-title">主要機能</h2>
+    <div class="card-grid grid-2" style="max-width:860px">
+      <div class="card">
+        <div class="card-icon">📰</div>
+        <h3>フィード & 投稿</h3>
+        <p>「助けます」「助けてください」の2種類を投稿。カテゴリ・タグで絞り込み検索、いいね機能も搭載。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">❤️</div>
+        <h3>スキルマッチング</h3>
+        <p>Tinder風スワイプUIでユーザーをマッチング。スキルの一致度でスコアリングして推薦。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">💬</div>
+        <h3>ダイレクトメッセージ</h3>
+        <p>マッチした相手とDMで詳細調整。リアルタイムメッセージング（既読機能付き）。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌐</div>
+        <h3>感謝チェーン 3D 可視化</h3>
+        <p>善意がどのように伝播したかを3Dグラフで可視化。自分が起点の恩送りが一目でわかる。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 5: Tech Stack -->
+  <div class="slide" id="s4">
+    <p class="slide-heading">Tech Stack</p>
+    <h2 class="section-title">技術スタック</h2>
+    <div class="card-grid" style="max-width:700px">
+      <div class="tech-item">
+        <div class="tech-icon">📱</div>
+        <div>
+          <div class="tech-name">iOS / SwiftUI</div>
+          <div class="tech-desc">MVVM + ObservableObject、カスタムUIコンポーネント、アニメーション</div>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">⚡</div>
+        <div>
+          <div class="tech-name">GraphQL + Apollo Server</div>
+          <div class="tech-desc">型安全なAPI設計、リゾルバーによる柔軟なデータ取得</div>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">🐘</div>
+        <div>
+          <div class="tech-name">PostgreSQL</div>
+          <div class="tech-desc">UUID主キー、外部キー制約、インデックス最適化で高速クエリ</div>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">🐳</div>
+        <div>
+          <div class="tech-name">Docker</div>
+          <div class="tech-desc">コンテナ化による再現性の高い開発環境・デプロイ</div>
+        </div>
+      </div>
+      <div class="tech-item">
+        <div class="tech-icon">🔐</div>
+        <div>
+          <div class="tech-name">JWT 認証</div>
+          <div class="tech-desc">bcrypt パスワードハッシュ、トークンベース認証フロー</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 6: Highlights -->
+  <div class="slide" id="s5">
+    <p class="slide-heading">こだわり</p>
+    <h2 class="section-title">工夫した点</h2>
+    <div class="card-grid grid-2" style="max-width:860px">
+      <div class="card">
+        <div class="card-icon">🎨</div>
+        <h3>ダークテーマUI設計</h3>
+        <p>バイオレット×シアンのグラデーションを基調とした独自デザインシステム。<code>Color+Extensions.swift</code> で全画面一貫したスタイルを管理。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🌐</div>
+        <h3>3D 感謝チェーン可視化</h3>
+        <p>SceneKit を使わず Pure SwiftUI で力学グラフアニメーションを実現。善意の波及を直感的に表現。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <h3>完全型安全 GraphQL</h3>
+        <p>スキーマ駆動開発で iOS 側と Backend 側の型を一致させ、ランタイムエラーを排除。</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📱</div>
+        <h3>オフライン対応 UI</h3>
+        <p>API 接続失敗時はモックデータでフォールバック。ハッカソンでも必ずデモが動く設計。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 7: Future -->
+  <div class="slide" id="s6">
+    <p class="slide-heading">Roadmap</p>
+    <h2 class="section-title">今後の展望</h2>
+    <div class="future-list">
+      <div class="future-item">
+        <div class="future-phase">Phase 1</div>
+        <div class="future-text">
+          <h4>🔔 リアルタイム通知 + Push通知</h4>
+          <p>WebSocket または Firebase Cloud Messaging でマッチング・メッセージをリアルタイム通知</p>
+        </div>
+      </div>
+      <div class="future-item">
+        <div class="future-phase">Phase 2</div>
+        <div class="future-text">
+          <h4>🤖 AIマッチング精度向上</h4>
+          <p>スキルの意味的類似度（embedding）でより精度の高いマッチングを実現</p>
+        </div>
+      </div>
+      <div class="future-item">
+        <div class="future-phase">Phase 3</div>
+        <div class="future-text">
+          <h4>🌍 コミュニティ・グループ機能</h4>
+          <p>地域・テーマ別のコミュニティで恩送りの輪を広げる</p>
+        </div>
+      </div>
+      <div class="future-item">
+        <div class="future-phase">Phase 4</div>
+        <div class="future-text">
+          <h4>💎 インパクトスコア & バッジ</h4>
+          <p>善意の波及効果を数値化し、社会貢献の可視化・ゲーミフィケーション</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide 8: Team / End -->
+  <div class="slide slide-end" id="s7">
+    <div class="chain-visual">
+      <div class="chain-node">👤</div>
+      <div class="chain-link"></div>
+      <div class="chain-node">🌟</div>
+      <div class="chain-link"></div>
+      <div class="chain-node">👤</div>
+      <div class="chain-link"></div>
+      <div class="chain-node">🌟</div>
+      <div class="chain-link"></div>
+      <div class="chain-node">👤</div>
+    </div>
+    <h1 class="main-title" style="font-size:52px">batON</h1>
+    <p class="tagline" style="font-size:18px">善意はバトンのように次の人へ渡される</p>
+    <div style="margin-top:40px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+      <div style="font-size:14px; color:var(--text2);">GeekCamp vol.1 2026</div>
+      <div style="font-size:16px; color:var(--text); font-weight:700;">田中 渓都</div>
+      <div style="font-size:14px; color:var(--primary-light);">iOS / Swift + GraphQL + PostgreSQL</div>
+    </div>
+    <div style="margin-top:32px;">
+      <a href="https://github.com/Tanakee/geekcamp1-20262-batON"
+         style="color:var(--primary-light); font-size:13px; text-decoration:none;">
+        🔗 github.com/Tanakee/geekcamp1-20262-batON
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prev-btn" onclick="changeSlide(-1)">‹</button>
+  <div class="dots" id="dots"></div>
+  <span id="slide-num">1 / 8</span>
+  <button id="next-btn" onclick="changeSlide(1)">›</button>
+</div>
+
+<script>
+  const total = 8;
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const dotsEl = document.getElementById('dots');
+  const numEl  = document.getElementById('slide-num');
+
+  // Build dots
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    slides[current].classList.add('prev');
+    setTimeout(() => slides[current].classList.remove('prev'), 500);
+
+    current = (n + total) % total;
+    slides[current].classList.add('active');
+
+    document.querySelectorAll('.dot').forEach((d, i) =>
+      d.classList.toggle('active', i === current));
+    numEl.textContent = `${current + 1} / ${total}`;
+  }
+
+  function changeSlide(dir) { goTo(current + dir); }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') changeSlide(1);
+    if (e.key === 'ArrowLeft') changeSlide(-1);
+  });
+
+  // Touch/swipe navigation
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) changeSlide(dx < 0 ? 1 : -1);
+  });
+</script>
+
+</body>
+</html>
