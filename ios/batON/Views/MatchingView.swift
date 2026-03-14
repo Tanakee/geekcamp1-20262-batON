@@ -24,102 +24,104 @@ struct MatchingView: View {
     var body: some View {
         ZStack {
             Color.batBackground.ignoresSafeArea()
-
             VStack(spacing: 0) {
-                // ヘッダー
-                HStack {
-                    Text("マッチング")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(Color.batTextPrimary)
-                    Spacer()
-                    Text("\(max(0, matchingPosts.count - currentIndex))件")
-                        .font(.system(size: 13))
-                        .foregroundColor(Color.batTextSecondary)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 14)
-                .background(Color.batCard)
-
+                header
                 if matchingPosts.isEmpty || currentIndex >= matchingPosts.count {
                     emptyState
                 } else {
-                    // カードスタック
-                    ZStack {
-                        ForEach((currentIndex..<min(currentIndex + 3, matchingPosts.count)).reversed(), id: \.self) { index in
-                            let stackDepth = index - currentIndex
-                            MatchingCard(
-                                post: matchingPosts[index],
-                                rating: mockRatings[index % mockRatings.count],
-                                isTop: stackDepth == 0,
-                                offset: stackDepth == 0 ? offset : 0,
-                                likeOpacity: stackDepth == 0 ? Double(max(0, offset - 40) / 80) : 0,
-                                nopeOpacity: stackDepth == 0 ? Double(max(0, -offset - 40) / 80) : 0
-                            )
-                            .scaleEffect(1.0 - CGFloat(stackDepth) * 0.04)
-                            .offset(y: CGFloat(stackDepth) * 12)
-                            .zIndex(Double(10 - stackDepth))
-                        }
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-                    .frame(maxHeight: .infinity, alignment: .top)
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                offset = value.translation.width
-                            }
-                            .onEnded { value in
-                                if value.translation.width > 100 {
-                                    swipeRight()
-                                } else if value.translation.width < -100 {
-                                    swipeLeft()
-                                } else {
-                                    withAnimation(.spring()) { offset = 0 }
-                                }
-                            }
-                    )
-
-                    // アクションボタン
-                    HStack(spacing: 32) {
-                        // パスボタン
-                        Button { swipeLeft() } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.batCard)
-                                    .frame(width: 68, height: 68)
-                                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 28, weight: .bold))
-                                    .foregroundColor(.gray)
-                            }
-                        }
-
-                        // ライクボタン
-                        Button { swipeRight() } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(LinearGradient.batPrimaryGradient)
-                                    .frame(width: 80, height: 80)
-                                    .shadow(color: Color.batPrimary.opacity(0.5), radius: 12, x: 0, y: 4)
-                                Image(systemName: "heart.fill")
-                                    .font(.system(size: 32, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                        }
-                    }
-                    .padding(.bottom, 32)
-                    .padding(.top, 16)
+                    cardStack
+                    actionButtons
                 }
             }
-
-            // マッチモーダル
             if showMatchModal, let post = matchedPost {
-                MatchModal(post: post) {
-                    showMatchModal = false
-                }
+                MatchModal(post: post) { showMatchModal = false }
             }
         }
         .navigationBarHidden(true)
+    }
+
+    private var header: some View {
+        HStack {
+            Text("マッチング")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(Color.batTextPrimary)
+            Spacer()
+            Text("\(max(0, matchingPosts.count - currentIndex))件")
+                .font(.system(size: 13))
+                .foregroundColor(Color.batTextSecondary)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .background(Color.batCard)
+    }
+
+    private var cardStack: some View {
+        let visibleRange = currentIndex..<min(currentIndex + 3, matchingPosts.count)
+        return ZStack {
+            ForEach(Array(visibleRange).reversed(), id: \.self) { index in
+                cardView(for: index)
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .frame(maxHeight: .infinity, alignment: .top)
+        .gesture(
+            DragGesture()
+                .onChanged { value in offset = value.translation.width }
+                .onEnded { value in
+                    if value.translation.width > 100 { swipeRight() }
+                    else if value.translation.width < -100 { swipeLeft() }
+                    else { withAnimation(.spring()) { offset = 0 } }
+                }
+        )
+    }
+
+    private func cardView(for index: Int) -> some View {
+        let stackDepth = index - currentIndex
+        let isTop = stackDepth == 0
+        let cardOffset: CGFloat = isTop ? offset : 0
+        let likeOpacity = isTop ? Double(max(0, offset - 40) / 80) : 0.0
+        let nopeOpacity = isTop ? Double(max(0, -offset - 40) / 80) : 0.0
+        return MatchingCard(
+            post: matchingPosts[index],
+            rating: mockRatings[index % mockRatings.count],
+            isTop: isTop,
+            offset: cardOffset,
+            likeOpacity: likeOpacity,
+            nopeOpacity: nopeOpacity
+        )
+        .scaleEffect(1.0 - CGFloat(stackDepth) * 0.04)
+        .offset(y: CGFloat(stackDepth) * 12)
+        .zIndex(Double(10 - stackDepth))
+    }
+
+    private var actionButtons: some View {
+        HStack(spacing: 32) {
+            Button { swipeLeft() } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color.batCard)
+                        .frame(width: 68, height: 68)
+                        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+                    Image(systemName: "xmark")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.gray)
+                }
+            }
+            Button { swipeRight() } label: {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient.batPrimaryGradient)
+                        .frame(width: 80, height: 80)
+                        .shadow(color: Color.batPrimary.opacity(0.5), radius: 12, x: 0, y: 4)
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                }
+            }
+        }
+        .padding(.bottom, 32)
+        .padding(.top, 16)
     }
 
     // MARK: - スワイプアクション
