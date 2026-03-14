@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum Tab {
-    case home, activity, chain, benefactor, profile
+    case home, feed, chain, search, profile
 }
 
 struct ContentView: View {
@@ -17,12 +17,12 @@ struct ContentView: View {
                 switch selectedTab {
                 case .home:
                     NavigationView { DashboardView() }
-                case .activity:
-                    NavigationView { ActivityListView() }
+                case .feed:
+                    NavigationView { FeedView() }
                 case .chain:
                     Color.clear // 中央ボタンはシートで開く
-                case .benefactor:
-                    NavigationView { BenefactorListView() }
+                case .search:
+                    NavigationView { ActivityListView() } // TODO: SearchView に置き換える
                 case .profile:
                     NavigationView { ProfileView() }
                 }
@@ -59,12 +59,12 @@ struct CustomTabBar: View {
             // タブバー背景
             HStack(spacing: 0) {
                 TabBarItem(icon: "house.fill", label: "ホーム", tab: .home, selectedTab: $selectedTab)
-                TabBarItem(icon: "sparkles", label: "活動", tab: .activity, selectedTab: $selectedTab)
+                TabBarItem(icon: "sparkles", label: "フィード", tab: .feed, selectedTab: $selectedTab)
 
                 // 中央ボタンのスペース
                 Color.clear.frame(width: 72)
 
-                TabBarItem(icon: "heart.fill", label: "恩人", tab: .benefactor, selectedTab: $selectedTab)
+                TabBarItem(icon: "magnifyingglass", label: "検索", tab: .search, selectedTab: $selectedTab)
                 TabBarItem(icon: "person.fill", label: "プロフィール", tab: .profile, selectedTab: $selectedTab)
             }
             .frame(height: 64)

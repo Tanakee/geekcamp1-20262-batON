@@ -11,6 +11,23 @@ private struct KindnessActsData: Decodable {
 private struct ReportsData: Decodable {
     let reports: [APIReport]
 }
+private struct PostsData: Decodable {
+    let posts: [APIPost]
+}
+private struct APIPost: Decodable {
+    let id: String
+    let userId: String
+    let type: String
+    let title: String
+    let description: String
+    let category: String?
+    let tags: [String]?
+    let location: String?
+    let status: String
+    let likesCount: Int
+    let commentsCount: Int
+    let createdAt: String
+}
 
 private struct APIBenefactor: Decodable {
     let id: String
@@ -43,6 +60,7 @@ class AppViewModel: ObservableObject {
     @Published var benefactors: [Benefactor] = []
     @Published var kindnessActs: [KindnessAct] = []
     @Published var reports: [Report] = []
+    @Published var posts: [Post] = []
     @Published var isLoadingData: Bool = false
     @Published var apiError: String? = nil
 
@@ -156,6 +174,52 @@ class AppViewModel: ObservableObject {
                     }
                 }
                 self?.pendingFetches -= 1
+            }
+        }
+    }
+
+    // MARK: - SNS フィード取得
+    func loadPosts() {
+        let query = """
+        query Posts($limit: Int, $offset: Int) {
+            posts(limit: $limit, offset: $offset) {
+                id userId type title description category tags location status likesCount commentsCount createdAt
+            }
+        }
+        """
+        isLoadingData = true
+        apiError = nil
+        APIService.shared.execute(query: query, variables: ["limit": 20, "offset": 0]) { [weak self] (result: Result<PostsData, Error>) in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let data):
+                    let formatter = ISO8601DateFormatter()
+                    self?.posts = data.posts.compactMap { apiPost in
+                        let type = PostType(rawValue: apiPost.type) ?? .help_request
+                        let status = PostStatus(rawValue: apiPost.status) ?? .open
+                        let date = formatter.date(from: apiPost.createdAt) ?? Date()
+                        return Post(
+                            id: apiPost.id,
+                            userId: apiPost.userId,
+                            userName: nil, // TODO: ユーザー情報が必要な場合は別フェッチ
+                            type: type,
+                            title: apiPost.title,
+                            description: apiPost.description,
+                            category: apiPost.category,
+                            tags: apiPost.tags ?? [],
+                            location: apiPost.location,
+                            status: status,
+                            likesCount: apiPost.likesCount,
+                            commentsCount: apiPost.commentsCount,
+                            createdAt: date
+                        )
+                    }
+                case .failure(let error):
+                    if case APIError.networkError = error { } else {
+                        self?.apiError = "フィードの読み込みに失敗しました"
+                    }
+                }
+                self?.isLoadingData = false
             }
         }
     }
