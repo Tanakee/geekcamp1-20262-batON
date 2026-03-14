@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum Tab {
-    case home, feed, chain, search, profile
+    case home, feed, chain, matching, profile
 }
 
 struct ContentView: View {
@@ -21,8 +21,8 @@ struct ContentView: View {
                     NavigationView { FeedView() }
                 case .chain:
                     Color.clear // 中央ボタンはシートで開く
-                case .search:
-                    NavigationView { ActivityListView() } // TODO: SearchView に置き換える
+                case .matching:
+                    NavigationView { SearchView() }
                 case .profile:
                     NavigationView { ProfileView() }
                 }
@@ -64,7 +64,7 @@ struct CustomTabBar: View {
                 // 中央ボタンのスペース
                 Color.clear.frame(width: 72)
 
-                TabBarItem(icon: "magnifyingglass", label: "検索", tab: .search, selectedTab: $selectedTab)
+                TabBarItem(icon: "heart.fill", label: "マッチング", tab: .matching, selectedTab: $selectedTab)
                 TabBarItem(icon: "person.fill", label: "プロフィール", tab: .profile, selectedTab: $selectedTab)
             }
             .frame(height: 64)
