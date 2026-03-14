@@ -255,9 +255,9 @@ struct CreatePostView: View {
         feedback.impactOccurred()
 
         // 少し遅延させて画面を閉じる
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.isSaving = false
-            self?.dismiss()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            isSaving = false
+            dismiss()
         }
     }
 }
