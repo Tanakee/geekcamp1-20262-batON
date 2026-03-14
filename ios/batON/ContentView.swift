@@ -72,7 +72,7 @@ struct CustomTabBar: View {
                 // 中央ボタンのスペース
                 Color.clear.frame(width: 72)
 
-                TabBarItem(icon: "heart.fill", label: "マッチング", tab: .matching, selectedTab: $selectedTab, badge: unreadCount)
+                TabBarItem(icon: "heart.fill", label: "マッチング", tab: .matching, selectedTab: $selectedTab)
                 TabBarItem(icon: "person.fill", label: "プロフィール", tab: .profile, selectedTab: $selectedTab)
             }
             .frame(height: 64)
