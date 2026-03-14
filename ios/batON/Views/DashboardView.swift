@@ -39,10 +39,14 @@ struct DashboardView: View {
                                     .clipShape(Circle())
 
                                 if appViewModel.unreadMessageCount > 0 {
-                                    Circle()
-                                        .fill(Color.red)
-                                        .frame(width: 10, height: 10)
-                                        .offset(x: 2, y: -2)
+                                    Text(appViewModel.unreadMessageCount > 99 ? "99+" : "\(appViewModel.unreadMessageCount)")
+                                        .font(.system(size: 9, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .padding(.horizontal, 4)
+                                        .frame(minWidth: 16, minHeight: 16)
+                                        .background(Color.red)
+                                        .clipShape(Capsule())
+                                        .offset(x: 6, y: -4)
                                 }
                             }
                         }

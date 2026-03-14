@@ -393,5 +393,16 @@ class AppViewModel: ObservableObject {
         kindnessActs = [act1, act2, act3]
         let r1 = Report(id: "r1", kindnessActId: "a2", benefactorId: "b1", activityTitle: "父のPCを修理した", benefactorName: "田中太郎（父）", message: "お父さんのおかげで困っている人を助けられました。", status: .sent, createdAt: cal.date(byAdding: .day, value: -7, to: now)!)
         reports = [r1]
+
+        // ダミー投稿（発表用）
+        posts = [
+            Post(id: "p1", userId: "u2", userName: "山田 花子", type: .help_offer, title: "Swiftアプリ開発を教えます", description: "iOS開発歴3年です。SwiftUIでのUI実装やAPIとの連携など、初心者から中級者まで丁寧にサポートします。オンライン可。", category: "IT", tags: ["Swift", "iOS", "SwiftUI"], location: "東京都", status: .open, likesCount: 12, commentsCount: 3, createdAt: cal.date(byAdding: .hour, value: -2, to: now)!),
+            Post(id: "p2", userId: "u3", userName: "佐藤 健", type: .help_request, title: "英語の履歴書を添削してほしい", description: "外資系への転職を考えています。英語の履歴書とカバーレターを添削していただける方を探しています。", category: "ビジネス", tags: ["英語", "転職", "キャリア"], location: "オンライン", status: .open, likesCount: 8, commentsCount: 1, createdAt: cal.date(byAdding: .hour, value: -5, to: now)!),
+            Post(id: "p3", userId: "u4", userName: "鈴木 美咲", type: .help_offer, title: "デザインフィードバック提供します", description: "UI/UXデザイナーとして5年の経験があります。アプリやWebサイトのデザインレビュー・改善提案ができます。", category: "クリエイティブ", tags: ["デザイン", "UI/UX", "Figma"], location: nil, status: .open, likesCount: 21, commentsCount: 5, createdAt: cal.date(byAdding: .day, value: -1, to: now)!),
+            Post(id: "p4", userId: "u5", userName: "中村 拓也", type: .help_request, title: "数学（微積分）を教えてください", description: "大学1年生です。微分積分の基礎がなかなか理解できずに困っています。週1回1〜2時間程度お願いしたいです。", category: "教育", tags: ["数学", "微積分", "大学"], location: "横浜市", status: .open, likesCount: 4, commentsCount: 0, createdAt: cal.date(byAdding: .day, value: -2, to: now)!),
+            Post(id: "p5", userId: "u6", userName: "伊藤 さくら", type: .help_offer, title: "料理レシピ・献立のアドバイスできます", description: "栄養士の資格を持っています。健康的な食事づくりや、食材を無駄なく使うレシピ提案が得意です。", category: "ライフスタイル", tags: ["料理", "栄養", "健康"], location: nil, status: .open, likesCount: 17, commentsCount: 7, createdAt: cal.date(byAdding: .day, value: -3, to: now)!),
+        ]
+
+        unreadMessageCount = 2
     }
 }
