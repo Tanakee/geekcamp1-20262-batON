@@ -221,41 +221,34 @@ struct GratitudeChainSceneView: UIViewRepresentable {
     private func addNodeSphere(node: ChainNodeData, position: SCNVector3, parent: SCNNode) {
         let sphereNode = SCNNode()
 
-        // 外側の発光球体
-        let glowSphere = SCNSphere(radius: node.role.size * 1.6)
-        let glowMaterial = SCNMaterial()
-        glowMaterial.diffuse.contents = node.role.color.withAlphaComponent(0.08)
-        glowMaterial.emission.contents = node.role.color.withAlphaComponent(0.05)
-        glowMaterial.isDoubleSided = true
-        glowSphere.materials = [glowMaterial]
-        let glowNode = SCNNode(geometry: glowSphere)
-        sphereNode.addChildNode(glowNode)
-
-        // メイン球体
+        // メイン球体（不透明にして点滅を防止）
         let sphere = SCNSphere(radius: node.role.size)
         sphere.segmentCount = 48
         let material = SCNMaterial()
-        material.diffuse.contents = node.role.color.withAlphaComponent(0.3)
-        material.emission.contents = node.role.color.withAlphaComponent(0.6)
+        material.diffuse.contents = node.role.color.withAlphaComponent(0.85)
+        material.emission.contents = node.role.color.withAlphaComponent(0.5)
         material.specular.contents = UIColor.white
-        material.shininess = 80
+        material.shininess = 100
         material.lightingModel = .phong
+        material.writesToDepthBuffer = true
+        material.readsFromDepthBuffer = true
         sphere.materials = [material]
         let mainNode = SCNNode(geometry: sphere)
         sphereNode.addChildNode(mainNode)
 
-        // リング（恩人・ユーザーのみ）
+        // リング（恩人・ユーザーのみ、不透明）
         if node.level < 2 {
             let ring = SCNTorus(ringRadius: node.role.size * 1.5, pipeRadius: 0.012)
             let ringMaterial = SCNMaterial()
-            ringMaterial.diffuse.contents = node.role.color.withAlphaComponent(0.4)
-            ringMaterial.emission.contents = node.role.color.withAlphaComponent(0.4)
+            ringMaterial.diffuse.contents = node.role.color
+            ringMaterial.emission.contents = node.role.color.withAlphaComponent(0.6)
+            ringMaterial.writesToDepthBuffer = true
+            ringMaterial.readsFromDepthBuffer = true
             ring.materials = [ringMaterial]
             let ringNode = SCNNode(geometry: ring)
             ringNode.eulerAngles = SCNVector3(Float.pi / 2.2, 0, 0)
             sphereNode.addChildNode(ringNode)
 
-            // リングをゆっくり回転
             let spin = SCNAction.repeatForever(SCNAction.rotateBy(x: 0, y: CGFloat.pi * 2, z: 0, duration: 8))
             ringNode.runAction(spin)
         }
@@ -265,15 +258,7 @@ struct GratitudeChainSceneView: UIViewRepresentable {
         floatUp.timingMode = .easeInEaseOut
         let floatDown = SCNAction.moveBy(x: 0, y: -0.06, z: 0, duration: 1.5 + Double(node.level) * 0.3)
         floatDown.timingMode = .easeInEaseOut
-        let floatLoop = SCNAction.repeatForever(SCNAction.sequence([floatUp, floatDown]))
-        sphereNode.runAction(floatLoop)
-
-        // パルスアニメーション
-        let pulse = SCNAction.repeatForever(SCNAction.sequence([
-            SCNAction.scale(to: 1.08, duration: 1.0),
-            SCNAction.scale(to: 1.0, duration: 1.0)
-        ]))
-        glowNode.runAction(pulse)
+        sphereNode.runAction(SCNAction.repeatForever(SCNAction.sequence([floatUp, floatDown])))
 
         sphereNode.position = position
         parent.addChildNode(sphereNode)
