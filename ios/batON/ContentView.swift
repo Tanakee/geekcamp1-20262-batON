@@ -21,7 +21,7 @@ struct ContentView: View {
                 case .feed:
                     NavigationView { FeedView() }
                 case .matching:
-                    SearchView()
+                    MatchingView()
                 case .profile:
                     ProfileView()
                 }
