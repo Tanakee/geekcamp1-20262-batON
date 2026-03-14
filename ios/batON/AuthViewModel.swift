@@ -25,6 +25,7 @@ class AuthViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var currentUserName: String = ""
     @Published var currentUserId: String = ""
+    @Published var currentUserSkills: [String] = []
 
     init() {
         // 前回のセッションを復元
