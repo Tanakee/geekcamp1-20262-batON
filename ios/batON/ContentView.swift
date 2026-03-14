@@ -9,6 +9,7 @@ struct ContentView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
     @State private var selectedTab: Tab = .home
     @State private var showChain = false
+    @State private var showConversations = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -31,20 +32,29 @@ struct ContentView: View {
             .padding(.bottom, 80) // タブバーの高さ分
 
             // カスタムタブバー
-            CustomTabBar(selectedTab: $selectedTab, showChain: $showChain)
+            CustomTabBar(selectedTab: $selectedTab, showChain: $showChain, unreadCount: appViewModel.unreadMessageCount)
         }
         .environmentObject(appViewModel)
         .ignoresSafeArea(.keyboard)
         .onAppear {
             appViewModel.loadFromAPI(userId: authViewModel.currentUserId)
+            appViewModel.loadPosts()
         }
         .onChange(of: authViewModel.currentUserId) { newId in
             appViewModel.loadFromAPI(userId: newId)
+            appViewModel.loadPosts()
         }
         .fullScreenCover(isPresented: $showChain) {
             ChainFullScreenView()
                 .environmentObject(appViewModel)
                 .environmentObject(authViewModel)
+        }
+        .sheet(isPresented: $showConversations) {
+            NavigationView {
+                ConversationsView()
+                    .environmentObject(appViewModel)
+                    .environmentObject(authViewModel)
+            }
         }
     }
 }
@@ -53,6 +63,7 @@ struct ContentView: View {
 struct CustomTabBar: View {
     @Binding var selectedTab: Tab
     @Binding var showChain: Bool
+    var unreadCount: Int = 0
 
     var body: some View {
         ZStack {
@@ -64,7 +75,7 @@ struct CustomTabBar: View {
                 // 中央ボタンのスペース
                 Color.clear.frame(width: 72)
 
-                TabBarItem(icon: "heart.fill", label: "マッチング", tab: .matching, selectedTab: $selectedTab)
+                TabBarItem(icon: "heart.fill", label: "マッチング", tab: .matching, selectedTab: $selectedTab, badge: unreadCount)
                 TabBarItem(icon: "person.fill", label: "プロフィール", tab: .profile, selectedTab: $selectedTab)
             }
             .frame(height: 64)
@@ -108,6 +119,7 @@ struct TabBarItem: View {
     let label: String
     let tab: Tab
     @Binding var selectedTab: Tab
+    var badge: Int = 0
 
     var isSelected: Bool { selectedTab == tab }
 
@@ -116,9 +128,22 @@ struct TabBarItem: View {
             selectedTab = tab
         } label: {
             VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 20))
-                    .foregroundColor(isSelected ? Color.batPrimary : Color.batTextSecondary)
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: icon)
+                        .font(.system(size: 20))
+                        .foregroundColor(isSelected ? Color.batPrimary : Color.batTextSecondary)
+
+                    if badge > 0 {
+                        Text(badge > 99 ? "99+" : "\(badge)")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 2)
+                            .background(Color.red)
+                            .clipShape(Capsule())
+                            .offset(x: 10, y: -6)
+                    }
+                }
                 Text(label)
                     .font(.system(size: 10))
                     .foregroundColor(isSelected ? Color.batPrimary : Color.batTextSecondary)

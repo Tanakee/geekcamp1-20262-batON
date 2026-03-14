@@ -63,6 +63,7 @@ class AppViewModel: ObservableObject {
     @Published var posts: [Post] = []
     @Published var isLoadingData: Bool = false
     @Published var apiError: String? = nil
+    @Published var unreadMessageCount: Int = 0
 
     private var userId: String = ""
     private var pendingFetches: Int = 0 {
