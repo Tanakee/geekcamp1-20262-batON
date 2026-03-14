@@ -17,11 +17,11 @@ struct ContentView: View {
             Group {
                 switch selectedTab {
                 case .home:
-                    NavigationView { DashboardView() }
+                    DashboardView()
                 case .feed:
                     NavigationView { FeedView() }
                 case .matching:
-                    NavigationView { SearchView() }
+                    SearchView()
                 case .profile:
                     NavigationView { ProfileView() }
                 }
