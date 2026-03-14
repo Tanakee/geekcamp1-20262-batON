@@ -1,8 +1,15 @@
 import Foundation
 
 enum PostType: String, CaseIterable {
-    case help_offer = "恩を教えます"
-    case help_request = "恩を受けたいです"
+    case help_offer = "help_offer"
+    case help_request = "help_request"
+
+    var displayName: String {
+        switch self {
+        case .help_offer: return "恩を送ります"
+        case .help_request: return "恩を受けたい"
+        }
+    }
 
     var icon: String {
         switch self {

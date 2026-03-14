@@ -32,7 +32,7 @@ struct PostCard: View {
                 HStack(spacing: 4) {
                     Text(post.type.icon)
                         .font(.system(size: 12))
-                    Text(post.type.rawValue)
+                    Text(post.type.displayName)
                         .font(.system(size: 11, weight: .semibold))
                 }
                 .foregroundColor(post.type == .help_offer ? Color.batSecondary : Color.batAccent)

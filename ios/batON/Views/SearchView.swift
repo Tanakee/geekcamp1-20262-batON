@@ -156,7 +156,7 @@ struct SearchView: View {
                 let matchesText = post.title.localizedCaseInsensitiveContains(searchText) ||
                                   post.description.localizedCaseInsensitiveContains(searchText)
                 let matchesCategory = selectedCategory.isEmpty || selectedCategory == "すべて" || post.category == selectedCategory
-                let matchesType = selectedType.isEmpty || selectedType == "すべて" || post.type.rawValue.contains(selectedType)
+                let matchesType = selectedType.isEmpty || selectedType == "すべて" || post.type.displayName.contains(selectedType)
 
                 return matchesText && matchesCategory && matchesType
             }
@@ -194,7 +194,7 @@ struct SearchResultCard: View {
 
                 HStack(spacing: 2) {
                     Text(post.type.icon)
-                    Text(post.type.rawValue)
+                    Text(post.type.displayName)
                         .font(.system(size: 10, weight: .semibold))
                 }
                 .foregroundColor(post.type == .help_offer ? Color.batSecondary : Color.batAccent)

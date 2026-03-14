@@ -36,6 +36,9 @@ struct CreatePostView: View {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(Color.batTextSecondary)
+                            .frame(width: 44, height: 44)
+                            .background(Color.batCardLight)
+                            .clipShape(Circle())
                     }
 
                     Spacer()
@@ -49,9 +52,13 @@ struct CreatePostView: View {
                     Button {
                         createPost()
                     } label: {
-                        Text("投稿")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(isFormValid && !isSaving ? Color.batPrimary : Color.batTextSecondary)
+                        Text(isSaving ? "投稿中…" : "投稿する")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .frame(height: 36)
+                            .background(isFormValid && !isSaving ? Color.batPrimary : Color.batTextSecondary.opacity(0.4))
+                            .cornerRadius(18)
                     }
                     .disabled(!isFormValid || isSaving)
                 }
@@ -75,7 +82,7 @@ struct CreatePostView: View {
                                         VStack(spacing: 4) {
                                             Text(type.icon)
                                                 .font(.system(size: 24))
-                                            Text(type.rawValue)
+                                            Text(type.displayName)
                                                 .font(.system(size: 11, weight: .semibold))
                                         }
                                         .frame(maxWidth: .infinity)
@@ -133,16 +140,25 @@ struct CreatePostView: View {
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(Color.batTextPrimary)
 
-                            Picker("カテゴリを選択", selection: $category) {
-                                Text("選択してください").tag("")
+                            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                                 ForEach(categories, id: \.self) { cat in
-                                    Text(cat).tag(cat)
+                                    Button {
+                                        category = cat
+                                    } label: {
+                                        Text(cat)
+                                            .font(.system(size: 13, weight: .semibold))
+                                            .foregroundColor(category == cat ? .white : Color.batTextSecondary)
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 10)
+                                            .background(category == cat ? Color.batPrimary : Color.batCard)
+                                            .cornerRadius(10)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 10)
+                                                    .stroke(category == cat ? Color.batPrimary : Color.clear, lineWidth: 1.5)
+                                            )
+                                    }
                                 }
                             }
-                            .pickerStyle(.navigationLink)
-                            .frame(height: 44)
-                            .background(Color.batCard)
-                            .cornerRadius(12)
                         }
 
                         // 場所情報
