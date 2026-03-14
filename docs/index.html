@@ -28,8 +28,16 @@
       height: 100vh;
     }
 
+    /* ─── Particle Canvas ─── */
+    #particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
     /* ─── Slide Container ─── */
-    .slides { width: 100%; height: 100vh; position: relative; }
+    .slides { width: 100%; height: 100vh; position: relative; z-index: 1; }
 
     .slide {
       position: absolute;
@@ -66,7 +74,7 @@
       align-items: center;
       gap: 16px;
       z-index: 100;
-      background: rgba(36,27,69,0.8);
+      background: rgba(36,27,69,0.85);
       backdrop-filter: blur(12px);
       padding: 10px 20px;
       border-radius: 40px;
@@ -97,16 +105,16 @@
       border-radius: 50%;
       background: var(--text2);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.25s;
     }
 
-    .dot.active { background: var(--primary); width: 20px; border-radius: 4px; }
+    .dot.active { background: var(--primary); width: 24px; border-radius: 4px; }
 
     #slide-num { font-size: 12px; color: var(--text2); min-width: 40px; text-align: center; }
 
     /* ─── Slide 1: Title ─── */
     .slide-title {
-      background: radial-gradient(ellipse at top, #2D1B69 0%, var(--bg) 70%);
+      background: radial-gradient(ellipse at 50% 30%, #2D1B69 0%, var(--bg) 65%);
     }
 
     .logo-circle {
@@ -118,23 +126,24 @@
       justify-content: center;
       font-size: 52px;
       margin-bottom: 32px;
-      box-shadow: 0 0 60px rgba(124,58,237,0.5);
+      box-shadow: 0 0 80px rgba(124,58,237,0.6);
       animation: float 3s ease-in-out infinite;
     }
 
     @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-12px); }
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-14px) rotate(2deg); }
     }
 
     h1.main-title {
-      font-size: 72px;
+      font-size: 80px;
       font-weight: 900;
       background: var(--gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       margin-bottom: 16px;
+      letter-spacing: -2px;
     }
 
     .tagline {
@@ -165,18 +174,19 @@
 
     /* ─── Headings ─── */
     .slide-heading {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
-      letter-spacing: 3px;
+      letter-spacing: 4px;
       text-transform: uppercase;
       color: var(--primary-light);
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      opacity: 0.85;
     }
 
     h2.section-title {
       font-size: 48px;
       font-weight: 800;
-      margin-bottom: 40px;
+      margin-bottom: 36px;
       line-height: 1.2;
       text-align: center;
     }
@@ -197,12 +207,12 @@
       border-radius: 20px;
       padding: 28px;
       border: 1px solid rgba(124,58,237,0.2);
+      transition: border-color 0.2s;
     }
 
-    .card-icon {
-      font-size: 36px;
-      margin-bottom: 12px;
-    }
+    .card:hover { border-color: rgba(124,58,237,0.5); }
+
+    .card-icon { font-size: 36px; margin-bottom: 12px; }
 
     .card h3 {
       font-size: 18px;
@@ -214,21 +224,8 @@
     .card p {
       font-size: 14px;
       color: var(--text2);
-      line-height: 1.6;
+      line-height: 1.7;
     }
-
-    /* ─── Pain Point Numbers ─── */
-    .stat-big {
-      font-size: 64px;
-      font-weight: 900;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      line-height: 1;
-    }
-
-    .stat-label { font-size: 16px; color: var(--text2); margin-top: 4px; }
 
     /* ─── Tech Stack ─── */
     .tech-item {
@@ -249,7 +246,6 @@
     .flow {
       display: flex;
       align-items: center;
-      gap: 0;
       width: 100%;
       max-width: 900px;
     }
@@ -272,7 +268,7 @@
 
     .flow-icon { font-size: 32px; margin-bottom: 10px; }
     .flow-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
-    .flow-desc { font-size: 11px; color: var(--text2); }
+    .flow-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
 
     /* ─── Highlight Box ─── */
     .highlight {
@@ -294,16 +290,16 @@
     .future-list {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
       width: 100%;
-      max-width: 700px;
+      max-width: 720px;
     }
 
     .future-item {
       display: flex;
       align-items: flex-start;
       gap: 16px;
-      padding: 20px 24px;
+      padding: 18px 24px;
       background: var(--card);
       border-radius: 14px;
       border-left: 3px solid var(--primary);
@@ -323,6 +319,30 @@
     .future-text h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
     .future-text p { font-size: 13px; color: var(--text2); }
 
+    /* ─── Demo Slide ─── */
+    .slide-demo {
+      background: radial-gradient(ellipse at center, #1a0d3d 0%, var(--bg) 70%);
+    }
+
+    .demo-pulse {
+      width: 160px; height: 160px;
+      border-radius: 40px;
+      background: var(--gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 72px;
+      margin-bottom: 40px;
+      box-shadow: 0 0 0 0 rgba(124,58,237,0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(124,58,237,0.5); }
+      70%  { box-shadow: 0 0 0 40px rgba(124,58,237,0); }
+      100% { box-shadow: 0 0 0 0 rgba(124,58,237,0); }
+    }
+
     /* ─── End Slide ─── */
     .slide-end {
       background: radial-gradient(ellipse at center, #2D1B69 0%, var(--bg) 70%);
@@ -331,7 +351,6 @@
     .chain-visual {
       display: flex;
       align-items: center;
-      gap: 0;
       margin-bottom: 40px;
     }
 
@@ -354,18 +373,20 @@
 </head>
 <body>
 
+<canvas id="particles"></canvas>
+
 <div class="slides" id="slides">
 
   <!-- Slide 1: Title -->
   <div class="slide slide-title active" id="s0">
     <div class="logo-circle">🌟</div>
     <h1 class="main-title">batON</h1>
-    <p class="tagline">恩送りをつなぐ、善意のSNSプラットフォーム</p>
+    <p class="tagline">善意のバトンをつなぐ、恩送りSNSプラットフォーム</p>
     <div class="badge-row">
       <span class="badge badge-purple">iOS / SwiftUI</span>
       <span class="badge badge-cyan">GraphQL API</span>
       <span class="badge badge-yellow">PostgreSQL</span>
-      <span class="badge badge-purple">GeekCamp 2026</span>
+      <span class="badge badge-purple">GeekCamp vol.1 2026</span>
     </div>
   </div>
 
@@ -373,42 +394,42 @@
   <div class="slide" id="s1">
     <p class="slide-heading">The Problem</p>
     <h2 class="section-title">善意はあるのに、<br>つながれない</h2>
-    <div style="width:100%; max-width:860px; display:flex; flex-direction:column; gap:16px;">
+    <div style="width:100%; max-width:860px; display:flex; flex-direction:column; gap:14px;">
       <div style="font-size:12px; color:var(--text2); text-align:right;">
         出典：内閣府「市民活動に関する世論調査」
       </div>
-      <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:16px; align-items:center;">
+      <div style="display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:center;">
         <!-- 課題列 -->
         <div style="display:flex; flex-direction:column; gap:12px;">
-          <div class="card" style="padding:20px">
+          <div class="card" style="padding:22px; border-color:rgba(248,113,113,0.3);">
             <div style="font-size:11px; font-weight:700; color:#F87171; letter-spacing:2px; margin-bottom:8px;">BARRIER 1</div>
-            <h3 style="font-size:15px; margin-bottom:4px;">参加方法・情報がわからない</h3>
-            <p style="font-size:13px;">助けたい気持ちはあっても、<br>どこで・誰に届ければいいか不明</p>
+            <h3 style="font-size:15px; margin-bottom:6px;">参加方法・情報がわからない</h3>
+            <p style="font-size:13px;">助けたい気持ちはあっても、どこで・誰に届ければいいかわからない</p>
           </div>
-          <div class="card" style="padding:20px">
+          <div class="card" style="padding:22px; border-color:rgba(248,113,113,0.3);">
             <div style="font-size:11px; font-weight:700; color:#F87171; letter-spacing:2px; margin-bottom:8px;">BARRIER 2</div>
-            <h3 style="font-size:15px; margin-bottom:4px;">一緒に活動する仲間がいない</h3>
-            <p style="font-size:13px;">孤独に行動するのは難しく、<br>つながりのきっかけがない</p>
+            <h3 style="font-size:15px; margin-bottom:6px;">一緒に活動する仲間がいない</h3>
+            <p style="font-size:13px;">孤独に行動するのは難しく、つながりのきっかけがない</p>
           </div>
         </div>
 
         <!-- 矢印 -->
-        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
-          <div style="font-size:32px; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-weight:900;">→</div>
-          <div style="font-size:11px; color:var(--primary-light); font-weight:700;">batON が解消</div>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+          <div style="font-size:36px; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-weight:900;">→</div>
+          <div style="font-size:11px; color:var(--primary-light); font-weight:700; letter-spacing:1px;">batON が解消</div>
         </div>
 
         <!-- 解決列 -->
         <div style="display:flex; flex-direction:column; gap:12px;">
-          <div class="card" style="padding:20px; border-color:rgba(6,182,212,0.4); background:rgba(6,182,212,0.05)">
+          <div class="card" style="padding:22px; border-color:rgba(6,182,212,0.4); background:rgba(6,182,212,0.05);">
             <div style="font-size:11px; font-weight:700; color:var(--secondary); letter-spacing:2px; margin-bottom:8px;">SOLUTION 1</div>
-            <h3 style="font-size:15px; margin-bottom:4px;">フィード & マッチング</h3>
-            <p style="font-size:13px;">スキル・ニーズを投稿し、<br>マッチした相手と即つながれる</p>
+            <h3 style="font-size:15px; margin-bottom:6px;">フィード & マッチング</h3>
+            <p style="font-size:13px;">スキル・ニーズを投稿し、マッチした相手と即つながれる</p>
           </div>
-          <div class="card" style="padding:20px; border-color:rgba(6,182,212,0.4); background:rgba(6,182,212,0.05)">
+          <div class="card" style="padding:22px; border-color:rgba(6,182,212,0.4); background:rgba(6,182,212,0.05);">
             <div style="font-size:11px; font-weight:700; color:var(--secondary); letter-spacing:2px; margin-bottom:8px;">SOLUTION 2</div>
-            <h3 style="font-size:15px; margin-bottom:4px;">DMチャット & 感謝チェーン</h3>
-            <p style="font-size:13px;">マッチ後すぐにDMで調整、<br>善意がつながる仕組みを可視化</p>
+            <h3 style="font-size:15px; margin-bottom:6px;">DMチャット & 感謝チェーン</h3>
+            <p style="font-size:13px;">マッチ後すぐにDMで調整、善意がつながる仕組みを可視化</p>
           </div>
         </div>
       </div>
@@ -423,13 +444,13 @@
       <div class="flow-step">
         <div class="flow-icon">✍️</div>
         <div class="flow-title">投稿</div>
-        <div class="flow-desc">「〇〇が得意、<br>助けます」を投稿</div>
+        <div class="flow-desc">「〇〇が得意、<br>恩を送ります」を投稿</div>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">
-        <div class="flow-icon">🎯</div>
+        <div class="flow-icon">🃏</div>
         <div class="flow-title">マッチング</div>
-        <div class="flow-desc">スキルで<br>自動マッチング</div>
+        <div class="flow-desc">カードスワイプで<br>相手を選ぶ</div>
       </div>
       <div class="flow-arrow">→</div>
       <div class="flow-step">
@@ -440,13 +461,13 @@
       <div class="flow-arrow">→</div>
       <div class="flow-step">
         <div class="flow-icon">🔗</div>
-        <div class="flow-title">チェーン</div>
-        <div class="flow-desc">助けられた人が<br>次の人を助ける</div>
+        <div class="flow-title">恩送り</div>
+        <div class="flow-desc">助けられた人が<br>次の誰かを助ける</div>
       </div>
     </div>
-    <div style="margin-top:32px; display:flex; gap:16px; flex-wrap:wrap; justify-content:center;">
+    <div style="margin-top:32px; display:flex; gap:12px; flex-wrap:wrap; justify-content:center;">
       <span class="badge badge-purple">フィード投稿</span>
-      <span class="badge badge-cyan">スキルマッチング</span>
+      <span class="badge badge-cyan">カードマッチング</span>
       <span class="badge badge-yellow">DMチャット</span>
       <span class="badge badge-purple">感謝チェーン可視化</span>
       <span class="badge badge-cyan">通知システム</span>
@@ -461,36 +482,47 @@
       <div class="card">
         <div class="card-icon">📰</div>
         <h3>フィード & 投稿</h3>
-        <p>「助けます」「助けてください」の2種類を投稿。カテゴリ・タグで絞り込み検索、いいね機能も搭載。</p>
+        <p>「恩を送ります」「恩を受けたい」の2種類を投稿。カテゴリ・タグで絞り込み、いいね機能も搭載。</p>
       </div>
       <div class="card">
-        <div class="card-icon">❤️</div>
-        <h3>スキルマッチング</h3>
-        <p>カードをスワイプして気になるユーザーにアプローチ。オープンな投稿を持つユーザーをレーティング順に推薦。</p>
+        <div class="card-icon">🃏</div>
+        <h3>カードマッチング</h3>
+        <p>カードをスワイプして気になるユーザーにアプローチ。マッチ成立でメッセージ交換へ。</p>
       </div>
       <div class="card">
         <div class="card-icon">💬</div>
         <h3>ダイレクトメッセージ</h3>
-        <p>マッチした相手とDMで詳細調整。リアルタイムメッセージング（既読機能付き）。</p>
+        <p>マッチした相手とDMで詳細を調整。リアルタイムメッセージング（既読機能付き）。</p>
       </div>
       <div class="card">
         <div class="card-icon">🌐</div>
         <h3>感謝チェーン 3D 可視化</h3>
-        <p>善意がどのように伝播したかを3Dグラフで可視化。自分が起点の恩送りが一目でわかる。</p>
+        <p>善意がどのように伝播したかをSceneKitの3Dグラフで可視化。恩送りの輪が一目でわかる。</p>
       </div>
     </div>
   </div>
 
-  <!-- Slide 5: Tech Stack -->
-  <div class="slide" id="s4">
+  <!-- Slide 5: DEMO -->
+  <div class="slide slide-demo" id="s4">
+    <p class="slide-heading">Live Demo</p>
+    <div class="demo-pulse">📱</div>
+    <h2 class="section-title" style="margin-bottom:16px;">デモ</h2>
+    <p style="font-size:18px; color:var(--text2); text-align:center; line-height:1.8; max-width:560px;">
+      実際のアプリを操作します<br>
+      <span style="color:var(--primary-light); font-weight:600;">フィード → 投稿 → マッチング → DM → 感謝チェーン</span>
+    </p>
+  </div>
+
+  <!-- Slide 6: Tech Stack -->
+  <div class="slide" id="s5">
     <p class="slide-heading">Tech Stack</p>
     <h2 class="section-title">技術スタック</h2>
-    <div class="card-grid" style="max-width:700px">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:820px; width:100%;">
       <div class="tech-item">
         <div class="tech-icon">📱</div>
         <div>
           <div class="tech-name">iOS / SwiftUI</div>
-          <div class="tech-desc">MVVM + ObservableObject、カスタムUIコンポーネント、アニメーション</div>
+          <div class="tech-desc">MVVM + ObservableObject、SceneKit 3D、カスタムアニメーション</div>
         </div>
       </div>
       <div class="tech-item">
@@ -514,7 +546,7 @@
           <div class="tech-desc">コンテナ化による再現性の高い開発環境・デプロイ</div>
         </div>
       </div>
-      <div class="tech-item">
+      <div class="tech-item" style="grid-column:1/-1;">
         <div class="tech-icon">🔐</div>
         <div>
           <div class="tech-name">JWT 認証</div>
@@ -524,36 +556,36 @@
     </div>
   </div>
 
-  <!-- Slide 6: Highlights -->
-  <div class="slide" id="s5">
+  <!-- Slide 7: Highlights -->
+  <div class="slide" id="s6">
     <p class="slide-heading">こだわり</p>
     <h2 class="section-title">工夫した点</h2>
     <div class="card-grid grid-2" style="max-width:860px">
       <div class="card">
         <div class="card-icon">🎨</div>
-        <h3>ダークテーマUI設計</h3>
-        <p>バイオレット×シアンのグラデーションを基調とした独自デザインシステム。<code>Color+Extensions.swift</code> で全画面一貫したスタイルを管理。</p>
+        <h3>独自デザインシステム</h3>
+        <p>バイオレット×シアンのグラデーションを全画面で統一。<code>Color+Extensions.swift</code> で一元管理。</p>
       </div>
       <div class="card">
         <div class="card-icon">🌐</div>
-        <h3>3D 感謝チェーン可視化</h3>
-        <p>SceneKit で3D感謝チェーンを可視化。ノードとエッジをリアルタイム描画し、善意の波及を直感的に表現。</p>
+        <h3>SceneKit 3D 感謝チェーン</h3>
+        <p>善意の伝播をリアルタイム3Dグラフで可視化。ノード・エッジをアニメーションで描画。</p>
       </div>
       <div class="card">
         <div class="card-icon">⚙️</div>
-        <h3>完全型安全 GraphQL</h3>
-        <p>スキーマ駆動開発で iOS 側と Backend 側の型を一致させ、ランタイムエラーを排除。</p>
+        <h3>スキーマ駆動 GraphQL</h3>
+        <p>iOS と Backend の型を一致させるスキーマ駆動開発でランタイムエラーをゼロに。</p>
       </div>
       <div class="card">
-        <div class="card-icon">📱</div>
-        <h3>オフライン対応 UI</h3>
-        <p>API 接続失敗時はモックデータでフォールバック。ハッカソンでも必ずデモが動く設計。</p>
+        <div class="card-icon">🛡️</div>
+        <h3>オフラインフォールバック</h3>
+        <p>API 接続失敗時はモックデータで動作継続。ハッカソンのデモが必ず動く設計。</p>
       </div>
     </div>
   </div>
 
-  <!-- Slide 7: Future -->
-  <div class="slide" id="s6">
+  <!-- Slide 8: Future -->
+  <div class="slide" id="s7">
     <p class="slide-heading">Roadmap</p>
     <h2 class="section-title">今後の展望</h2>
     <div class="future-list">
@@ -561,35 +593,35 @@
         <div class="future-phase">Phase 1</div>
         <div class="future-text">
           <h4>🔔 リアルタイム通知 + Push通知</h4>
-          <p>WebSocket または Firebase Cloud Messaging でマッチング・メッセージをリアルタイム通知</p>
+          <p>WebSocket / FCM でマッチング・メッセージをリアルタイム通知</p>
         </div>
       </div>
       <div class="future-item">
         <div class="future-phase">Phase 2</div>
         <div class="future-text">
-          <h4>🤖 AIマッチング精度向上</h4>
-          <p>スキルの意味的類似度（embedding）でより精度の高いマッチングを実現</p>
+          <h4>🤖 AI マッチング精度向上</h4>
+          <p>スキルの意味的類似度（embedding）でよりパーソナルなマッチングを実現</p>
         </div>
       </div>
       <div class="future-item">
         <div class="future-phase">Phase 3</div>
         <div class="future-text">
           <h4>🌍 コミュニティ・グループ機能</h4>
-          <p>地域・テーマ別のコミュニティで恩送りの輪を広げる</p>
+          <p>地域・テーマ別のコミュニティで恩送りの輪をさらに広げる</p>
         </div>
       </div>
       <div class="future-item">
         <div class="future-phase">Phase 4</div>
         <div class="future-text">
           <h4>💎 インパクトスコア & バッジ</h4>
-          <p>善意の波及効果を数値化し、社会貢献の可視化・ゲーミフィケーション</p>
+          <p>善意の波及効果を数値化し、社会貢献をゲーミフィケーション</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Slide 8: Team / End -->
-  <div class="slide slide-end" id="s7">
+  <!-- Slide 9: End -->
+  <div class="slide slide-end" id="s8">
     <div class="chain-visual">
       <div class="chain-node">👤</div>
       <div class="chain-link"></div>
@@ -601,16 +633,16 @@
       <div class="chain-link"></div>
       <div class="chain-node">👤</div>
     </div>
-    <h1 class="main-title" style="font-size:52px">batON</h1>
-    <p class="tagline" style="font-size:18px">善意はバトンのように次の人へ渡される</p>
-    <div style="margin-top:40px; display:flex; flex-direction:column; align-items:center; gap:8px;">
+    <h1 class="main-title" style="font-size:56px">batON</h1>
+    <p class="tagline" style="font-size:20px;">善意はバトンのように次の人へ渡される</p>
+    <div style="margin-top:40px; display:flex; flex-direction:column; align-items:center; gap:10px;">
       <div style="font-size:14px; color:var(--text2);">GeekCamp vol.1 2026</div>
-      <div style="font-size:16px; color:var(--text); font-weight:700;">田中 渓都</div>
-      <div style="font-size:14px; color:var(--primary-light);">iOS / Swift + GraphQL + PostgreSQL</div>
+      <div style="font-size:18px; color:var(--text); font-weight:700;">田中 渓都</div>
+      <div style="font-size:14px; color:var(--primary-light);">iOS / SwiftUI + GraphQL + PostgreSQL</div>
     </div>
-    <div style="margin-top:32px;">
+    <div style="margin-top:28px;">
       <a href="https://github.com/Tanakee/geekcamp1-20262-batON"
-         style="color:var(--primary-light); font-size:13px; text-decoration:none;">
+         style="color:var(--primary-light); font-size:13px; text-decoration:none; opacity:0.8;">
         🔗 github.com/Tanakee/geekcamp1-20262-batON
       </a>
     </div>
@@ -622,18 +654,55 @@
 <div class="nav">
   <button id="prev-btn" onclick="changeSlide(-1)">‹</button>
   <div class="dots" id="dots"></div>
-  <span id="slide-num">1 / 8</span>
+  <span id="slide-num">1 / 9</span>
   <button id="next-btn" onclick="changeSlide(1)">›</button>
 </div>
 
 <script>
-  const total = 8;
+  // ─── Particles ───
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = Array.from({ length: 60 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.5 + 0.5,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    alpha: Math.random() * 0.5 + 0.1,
+  }));
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = canvas.width;
+      if (p.x > canvas.width) p.x = 0;
+      if (p.y < 0) p.y = canvas.height;
+      if (p.y > canvas.height) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(167,139,250,${p.alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  // ─── Slide navigation ───
+  const total = 9;
   let current = 0;
   const slides = document.querySelectorAll('.slide');
   const dotsEl = document.getElementById('dots');
   const numEl  = document.getElementById('slide-num');
 
-  // Build dots
   for (let i = 0; i < total; i++) {
     const d = document.createElement('div');
     d.className = 'dot' + (i === 0 ? ' active' : '');
@@ -645,10 +714,8 @@
     slides[current].classList.remove('active');
     slides[current].classList.add('prev');
     setTimeout(() => slides[current].classList.remove('prev'), 500);
-
     current = (n + total) % total;
     slides[current].classList.add('active');
-
     document.querySelectorAll('.dot').forEach((d, i) =>
       d.classList.toggle('active', i === current));
     numEl.textContent = `${current + 1} / ${total}`;
@@ -656,13 +723,11 @@
 
   function changeSlide(dir) { goTo(current + dir); }
 
-  // Keyboard navigation
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight' || e.key === ' ') changeSlide(1);
     if (e.key === 'ArrowLeft') changeSlide(-1);
   });
 
-  // Touch/swipe navigation
   let touchStartX = 0;
   document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
   document.addEventListener('touchend', e => {
