@@ -5,69 +5,154 @@ export const typeDefs = gql`
     id: ID!
     email: String!
     name: String!
-    profileImageUrl: String
+    avatarUrl: String
     bio: String
-    isPublic: Boolean!
+    skills: [String!]
+    rating: Float!
+    totalRatings: Int!
+    followersCount: Int!
+    followingCount: Int!
+    postsCount: Int!
+    completedActsCount: Int!
+    isActive: Boolean!
     createdAt: String!
     updatedAt: String!
   }
 
-  type Benefactor {
+  type Post {
     id: ID!
     userId: ID!
-    name: String!
-    relation: String
-    kindnessDescription: String
-    imageUrl: String
-    kindnessActCount: Int!
-    createdAt: String!
-    updatedAt: String!
-  }
-
-  type KindnessAct {
-    id: ID!
-    userId: ID!
-    benefactorId: ID!
+    user: User
+    type: String!
     title: String!
-    description: String
-    category: String!
-    actDate: String!
+    description: String!
+    category: String
+    tags: [String!]
     location: String
-    recipientName: String!
-    imageUrls: [String]
-    isReported: Boolean!
-    reportedAt: String
+    status: String!
+    likesCount: Int!
+    commentsCount: Int!
     createdAt: String!
     updatedAt: String!
   }
 
-  type Report {
+  type Connection {
     id: ID!
-    kindnessActId: ID!
-    benefactorId: ID!
-    userId: ID!
-    message: String!
+    user1Id: ID!
+    user2Id: ID!
+    type: String!
     status: String!
     createdAt: String!
-    sentAt: String
+    updatedAt: String!
+  }
+
+  type Activity {
+    id: ID!
+    postId: ID!
+    post: Post
+    initiatorId: ID!
+    initiator: User
+    helperId: ID!
+    helper: User
+    description: String
+    status: String!
+    completedAt: String
+    ratingFromInitiator: Float
+    ratingFromHelper: Float
+    reviewFromInitiator: String
+    reviewFromHelper: String
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type Message {
+    id: ID!
+    conversationId: ID!
+    senderId: ID!
+    sender: User
+    content: String!
+    readAt: String
+    createdAt: String!
+  }
+
+  type Conversation {
+    id: ID!
+    user1Id: ID!
+    user2Id: ID!
+    user1: User
+    user2: User
+    lastMessageAt: String
+    createdAt: String!
+  }
+
+  type Notification {
+    id: ID!
+    userId: ID!
+    type: String!
+    relatedUserId: ID
+    relatedPostId: ID
+    relatedActivityId: ID
+    title: String
+    message: String
+    readAt: String
+    createdAt: String!
+  }
+
+  type NotificationSettings {
+    id: ID!
+    userId: ID!
+    matchNotifications: Boolean!
+    messageNotifications: Boolean!
+    commentNotifications: Boolean!
+    likeNotifications: Boolean!
+    followNotifications: Boolean!
+    ratingNotifications: Boolean!
+    createdAt: String!
+    updatedAt: String!
+  }
+
+  type Skill {
+    id: ID!
+    name: String!
+    category: String
+    iconUrl: String
+    createdAt: String!
   }
 
   type Query {
     # ユーザー関連
     user(id: ID!): User
     currentUser: User
+    searchUsers(query: String!, limit: Int, offset: Int): [User!]
 
-    # 恩人関連
-    benefactors(userId: ID!): [Benefactor]
-    benefactor(id: ID!): Benefactor
+    # ポスト関連
+    posts(limit: Int, offset: Int, type: String, status: String, category: String): [Post!]
+    post(id: ID!): Post
+    userPosts(userId: ID!, limit: Int, offset: Int): [Post!]
+    searchPosts(query: String!, category: String, type: String, limit: Int, offset: Int): [Post!]
+
+    # コネクション関連
+    connections(userId: ID!, type: String): [Connection!]
+    followers(userId: ID!, limit: Int, offset: Int): [User!]
+    following(userId: ID!, limit: Int, offset: Int): [User!]
 
     # 活動関連
-    kindnessActs(userId: ID!): [KindnessAct]
-    kindnessAct(id: ID!): KindnessAct
+    activities(userId: ID!, limit: Int, offset: Int): [Activity!]
+    activity(id: ID!): Activity
 
-    # 報告関連
-    reports(userId: ID!): [Report]
-    report(id: ID!): Report
+    # メッセージング
+    conversations(userId: ID!, limit: Int, offset: Int): [Conversation!]
+    messages(conversationId: ID!, limit: Int, offset: Int): [Message!]
+
+    # 通知
+    notifications(userId: ID!, limit: Int, offset: Int): [Notification!]
+    notificationSettings(userId: ID!): NotificationSettings
+
+    # スキル
+    skills: [Skill!]
+
+    # マッチング
+    getMatches(userId: ID!, limit: Int): [User!]
 
     # ヘルスチェック
     health: String
@@ -80,34 +165,64 @@ export const typeDefs = gql`
 
   type Mutation {
     # 認証
-    register(email: String!, name: String!, password: String!): AuthPayload!
+    register(email: String!, name: String!, password: String!, skills: [String!]): AuthPayload!
     login(email: String!, password: String!): AuthPayload!
 
     # ユーザー
-    createUser(email: String!, name: String!, password: String!): User
-    updateUser(id: ID!, name: String, bio: String, isPublic: Boolean): User
+    updateProfile(
+      id: ID!
+      name: String
+      bio: String
+      avatarUrl: String
+      skills: [String!]
+    ): User
 
-    # 恩人
-    createBenefactor(userId: ID!, name: String!, relation: String, kindnessDescription: String): Benefactor
-    updateBenefactor(id: ID!, name: String, relation: String, kindnessDescription: String): Benefactor
-    deleteBenefactor(id: ID!): Boolean
+    # ポスト
+    createPost(
+      userId: ID!
+      type: String!
+      title: String!
+      description: String!
+      category: String
+      tags: [String!]
+      location: String
+    ): Post!
+    updatePost(
+      id: ID!
+      title: String
+      description: String
+      status: String
+    ): Post
+    deletePost(id: ID!): Boolean!
+
+    # コネクション
+    followUser(followerId: ID!, followingId: ID!): Connection!
+    unfollowUser(followerId: ID!, followingId: ID!): Boolean!
+    likePost(userId: ID!, postId: ID!): Post!
 
     # 活動
-    createKindnessAct(
+    createActivity(postId: ID!, initiatorId: ID!, helperId: ID!): Activity!
+    completeActivity(id: ID!): Activity!
+    rateActivity(
+      activityId: ID!
       userId: ID!
-      benefactorId: ID!
-      title: String!
-      description: String
-      category: String!
-      actDate: String!
-      location: String
-      recipientName: String!
-    ): KindnessAct
-    updateKindnessAct(id: ID!, title: String, description: String): KindnessAct
-    deleteKindnessAct(id: ID!): Boolean
+      rating: Float!
+      review: String
+    ): Activity!
 
-    # 報告
-    createReport(kindnessActId: ID!, benefactorId: ID!, userId: ID!, message: String!): Report
-    sendReport(id: ID!): Report
+    # メッセージング
+    sendMessage(conversationId: ID!, senderId: ID!, content: String!): Message!
+    markMessagesAsRead(conversationId: ID!): Boolean!
+
+    # 通知設定
+    updateNotificationSettings(
+      userId: ID!
+      matchNotifications: Boolean
+      messageNotifications: Boolean
+      commentNotifications: Boolean
+      likeNotifications: Boolean
+      followNotifications: Boolean
+      ratingNotifications: Boolean
+    ): NotificationSettings!
   }
 `;
