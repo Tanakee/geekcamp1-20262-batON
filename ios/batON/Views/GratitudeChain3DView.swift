@@ -42,34 +42,80 @@ struct GratitudeChainSceneView: UIViewRepresentable {
     func makeUIView(context: Context) -> SCNView {
         let sceneView = SCNView()
         sceneView.backgroundColor = UIColor(red: 0.06, green: 0.06, blue: 0.10, alpha: 1)
-        sceneView.allowsCameraControl = true
+        sceneView.allowsCameraControl = false   // カスタムジェスチャーで制御
         sceneView.autoenablesDefaultLighting = false
         sceneView.antialiasingMode = .multisampling4X
 
         let scene = SCNScene()
         sceneView.scene = scene
 
-        setupCamera(scene: scene)
+        // チェーンコンテナ（回転軸 = 原点に固定）
+        let container = SCNNode()
+        container.name = "chainContainer"
+        scene.rootNode.addChildNode(container)
+
+        setupCamera(scene: scene, sceneView: sceneView)
         setupLighting(scene: scene)
-        buildGraph(scene: scene)
+        buildGraph(scene: scene, container: container)
         addStarfield(scene: scene)
 
-        // 回転軸をチェーン中心（ユーザーノード＝原点）に固定
-        sceneView.defaultCameraController.interactionMode = .orbitTurntable
-        sceneView.defaultCameraController.target = SCNVector3(0, 0, 0)
+        // ジェスチャー登録
+        let pan = UIPanGestureRecognizer(target: context.coordinator,
+                                         action: #selector(Coordinator.handlePan(_:)))
+        let pinch = UIPinchGestureRecognizer(target: context.coordinator,
+                                              action: #selector(Coordinator.handlePinch(_:)))
+        sceneView.addGestureRecognizer(pan)
+        sceneView.addGestureRecognizer(pinch)
+        context.coordinator.sceneView = sceneView
 
         return sceneView
     }
 
+    func makeCoordinator() -> Coordinator { Coordinator() }
     func updateUIView(_ uiView: SCNView, context: Context) {}
 
+    // MARK: - Coordinator（ジェスチャー処理）
+    class Coordinator: NSObject {
+        weak var sceneView: SCNView?
+        private var lastPan: CGPoint = .zero
+        private var baseZoom: Float = 3.5
+
+        @objc func handlePan(_ g: UIPanGestureRecognizer) {
+            guard let sv = sceneView,
+                  let container = sv.scene?.rootNode.childNode(withName: "chainContainer", recursively: false)
+            else { return }
+
+            let t = g.translation(in: sv)
+            if g.state == .began { lastPan = .zero }
+
+            let dx = Float(t.x - lastPan.x) * 0.4   // 水平 → Y軸回転
+            let dy = Float(t.y - lastPan.y) * 0.4   // 垂直 → X軸回転
+            lastPan = t
+
+            // Y軸回転（チェーンを左右に回す）
+            let yRot = SCNMatrix4MakeRotation(dx * .pi / 180, 0, 1, 0)
+            container.transform = SCNMatrix4Mult(container.transform, yRot)
+
+            // X軸回転（上下）を ±70° に制限
+            let newX = max(-1.2, min(1.2, container.eulerAngles.x + dy * .pi / 180))
+            container.eulerAngles.x = newX
+        }
+
+        @objc func handlePinch(_ g: UIPinchGestureRecognizer) {
+            guard let sv = sceneView, let pov = sv.pointOfView else { return }
+            if g.state == .began { baseZoom = pov.position.z }
+            pov.position.z = max(1.5, min(7.0, baseZoom / Float(g.scale)))
+        }
+    }
+
     // MARK: - カメラ設定
-    private func setupCamera(scene: SCNScene) {
+    private func setupCamera(scene: SCNScene, sceneView: SCNView) {
         let cameraNode = SCNNode()
         cameraNode.camera = SCNCamera()
         cameraNode.camera?.zFar = 100
-        cameraNode.position = SCNVector3(x: 0, y: 0.5, z: 3.5)
+        cameraNode.position = SCNVector3(x: 0, y: 0, z: 3.5)
         scene.rootNode.addChildNode(cameraNode)
+        sceneView.pointOfView = cameraNode
     }
 
     // MARK: - ライト設定
@@ -101,14 +147,13 @@ struct GratitudeChainSceneView: UIViewRepresentable {
         scene.rootNode.addChildNode(topLight)
     }
 
-    // MARK: - グラフ構築
-    private func buildGraph(scene: SCNScene) {
+    // MARK: - グラフ構築（containerに追加することで回転軸を原点に固定）
+    private func buildGraph(scene: SCNScene, container: SCNNode) {
         var nodePositions: [String: SCNVector3] = [:]
 
         let benefactors = nodes.filter { $0.level == 0 }
         let recipients  = nodes.filter { $0.level == 2 }
 
-        // ノードの位置を決定
         for node in nodes {
             let pos: SCNVector3
             switch node.level {
@@ -119,7 +164,7 @@ struct GratitudeChainSceneView: UIViewRepresentable {
                                   y: 1.3, radius: arcRadius(total),
                                   startAngle: -.pi / 2 - spreadAngle(total) / 2,
                                   spread: spreadAngle(total))
-            case 1: // ユーザー（中央）
+            case 1: // ユーザー（中央・原点）
                 pos = SCNVector3(0, 0, 0)
             case 2: // 受益者（下部・扇形配置）
                 let total = recipients.count
@@ -132,15 +177,14 @@ struct GratitudeChainSceneView: UIViewRepresentable {
                 pos = SCNVector3(0, 0, 0)
             }
             nodePositions[node.id] = pos
-            addNodeSphere(node: node, position: pos, scene: scene)
+            addNodeSphere(node: node, position: pos, parent: container)
         }
 
-        // エッジを描画
         for node in nodes {
             guard let fromPos = nodePositions[node.id] else { continue }
             for connId in node.connections {
                 if let toPos = nodePositions[connId] {
-                    addEdge(from: fromPos, to: toPos, scene: scene)
+                    addEdge(from: fromPos, to: toPos, parent: container)
                 }
             }
         }
@@ -174,7 +218,7 @@ struct GratitudeChainSceneView: UIViewRepresentable {
     }
 
     // MARK: - ノード球体を追加
-    private func addNodeSphere(node: ChainNodeData, position: SCNVector3, scene: SCNScene) {
+    private func addNodeSphere(node: ChainNodeData, position: SCNVector3, parent: SCNNode) {
         let sphereNode = SCNNode()
 
         // 外側の発光球体
@@ -232,14 +276,14 @@ struct GratitudeChainSceneView: UIViewRepresentable {
         glowNode.runAction(pulse)
 
         sphereNode.position = position
-        scene.rootNode.addChildNode(sphereNode)
+        parent.addChildNode(sphereNode)
 
         // テキストラベル
-        addLabel(text: node.name, subtext: node.role.label, position: position, color: node.role.color, scene: scene)
+        addLabel(text: node.name, subtext: node.role.label, position: position, color: node.role.color, parent: parent)
     }
 
     // MARK: - テキストラベルを追加
-    private func addLabel(text: String, subtext: String, position: SCNVector3, color: UIColor, scene: SCNScene) {
+    private func addLabel(text: String, subtext: String, position: SCNVector3, color: UIColor, parent: SCNNode) {
         let textGeometry = SCNText(string: text, extrusionDepth: 0.005)
         textGeometry.font = UIFont.systemFont(ofSize: 0.18, weight: .bold)
         textGeometry.flatness = 0.01
@@ -252,12 +296,11 @@ struct GratitudeChainSceneView: UIViewRepresentable {
         let (min, max) = textNode.boundingBox
         let width = max.x - min.x
         textNode.position = SCNVector3(position.x - width / 2, position.y - 0.38, position.z)
-        textNode.scale = SCNVector3(1, 1, 1)
-        scene.rootNode.addChildNode(textNode)
+        parent.addChildNode(textNode)
     }
 
     // MARK: - エッジを追加
-    private func addEdge(from: SCNVector3, to: SCNVector3, scene: SCNScene) {
+    private func addEdge(from: SCNVector3, to: SCNVector3, parent: SCNNode) {
         let dx = to.x - from.x
         let dy = to.y - from.y
         let dz = to.z - from.z
@@ -296,7 +339,7 @@ struct GratitudeChainSceneView: UIViewRepresentable {
         ]))
         edgeNode.runAction(pulse)
 
-        scene.rootNode.addChildNode(edgeNode)
+        parent.addChildNode(edgeNode)
     }
 
     // MARK: - 星空背景
