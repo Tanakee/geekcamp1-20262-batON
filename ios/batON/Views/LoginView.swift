@@ -78,6 +78,17 @@ struct LoginView: View {
                             }
                             .font(.system(size: 14))
                         }
+
+                        Button {
+                            authViewModel.currentUserName = "田中 渓都"
+                            authViewModel.currentUserId = "mock-user"
+                            authViewModel.isLoggedIn = true
+                        } label: {
+                            Text("デモとして試す")
+                                .font(.system(size: 13))
+                                .foregroundColor(Color.batTextSecondary.opacity(0.6))
+                                .underline()
+                        }
                     }
                     .padding(.horizontal, 24)
                 }
